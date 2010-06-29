@@ -479,6 +479,19 @@ Jackknife ReadTextFile(string file, int N)
   return result;
 }
   
+//Outputs the average followed by the jackknife values to a text file.
+//Not a friend or a member function.
+void OutputAveJk(string filename, const Jackknife & J)
+{
+  ofstream fout(filename.c_str());
+  fout.precision(16);
+  int N=J.ReturnN();
+  fout << J.ReturnAve() << "\n";
+  for (int i=0; i<N; i++)
+    fout << J.ReturnJk(i) << "\n";
+  fout.close();
+}
+
 
 
 //JackknifeCmplx class

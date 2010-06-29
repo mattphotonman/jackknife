@@ -54,6 +54,8 @@ class Jackknife
   friend Jackknife Log(const Jackknife & J);
   Jackknife & Sqrt();
   friend Jackknife Sqrt(const Jackknife & J);
+  Jackknife & Exp();
+  friend Jackknife Exp(const Jackknife & J);
   Jackknife & Abs();
   friend Jackknife Abs(const Jackknife & J);
   friend Jackknife Abs(const JackknifeCmplx & J);

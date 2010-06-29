@@ -122,4 +122,6 @@ class JackknifeCmplx
   friend DoubleJackknifeCmplx Combine(const DoubleJackknifeCmplx & J1, const DoubleJackknifeCmplx & J2);
 };
 
+void OutputAveJk(string filename, const Jackknife & J);
+
 #endif

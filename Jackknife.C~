@@ -332,6 +332,25 @@ Jackknife Sqrt(const Jackknife & J)
   return tmp;
 }
 
+//Exp (member function)
+Jackknife & Jackknife::Exp()
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=exp(jk[i]);
+  }
+  ave=exp(ave);
+  CalcAll();
+  return *this;
+}
+
+//Exp (friend function)
+Jackknife Exp(const Jackknife & J)
+{
+  Jackknife tmp(J);
+  tmp.Exp();
+  return tmp;
+}
+
 //Abs (member function)
 Jackknife & Jackknife::Abs()
 {
