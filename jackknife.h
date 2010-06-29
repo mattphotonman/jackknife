@@ -56,6 +56,8 @@ class Jackknife
   friend Jackknife Sqrt(const Jackknife & J);
   Jackknife & Exp();
   friend Jackknife Exp(const Jackknife & J);
+  friend Jackknife Meff_two_point(const Jackknife & C1, const Jackknife & C2, int t, int Nt);
+  friend Jackknife Meff_three_point(const Jackknife & C1, const Jackknife & C2, const Jackknife & C3, int t, int Nt);
   Jackknife & Phi(int tau_x, int tau_y, int tau_z);
   friend Jackknife Phi(const Jackknife & J, int tau_x, int tau_y, int tau_z);
   Jackknife & Phi_Phi0(int tau_x, int tau_y, int tau_z, double phi0);

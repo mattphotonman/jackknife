@@ -54,6 +54,10 @@ class JackknifeTimeSeries
   friend JackknifeTimeSeries TranslateReverse(int t, const JackknifeTimeSeries & JT);
   JackknifeTimeSeries & M_eff();
   friend JackknifeTimeSeries M_eff(const JackknifeTimeSeries & JT);
+  JackknifeTimeSeries & M_eff_two_point();
+  friend JackknifeTimeSeries M_eff_two_point(const JackknifeTimeSeries & JT);
+  JackknifeTimeSeries & M_eff_three_point();
+  friend JackknifeTimeSeries M_eff_three_point(const JackknifeTimeSeries & JT);  
   JackknifeTimeSeries & Abs();
   friend JackknifeTimeSeries Abs(const JackknifeTimeSeries & JT);
   friend JackknifeTimeSeries Abs(const JackknifeCmplxTimeSeries & JT);

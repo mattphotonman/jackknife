@@ -436,6 +436,49 @@ JackknifeTimeSeries M_eff(const JackknifeTimeSeries & JT)
   return tmp;
 }
 
+JackknifeTimeSeries & JackknifeTimeSeries::M_eff_two_point()
+{
+  JackknifeTimeSeries tmp(*this);
+  is_defined[0]=0;
+  for (int t=1; t<=Nt; t++) {
+    if (tmp.is_defined[t] && tmp.is_defined[t-1]) {
+      Jk[t]=Meff_two_point(tmp.Jk[t-1],tmp.Jk[t],t,Nt);
+      is_defined[t]=1;
+    } else
+      is_defined[t]=0;
+  }
+  return *this;
+}
+
+JackknifeTimeSeries M_eff_two_point(const JackknifeTimeSeries & JT)
+{
+  JackknifeTimeSeries tmp(JT);
+  tmp.M_eff_two_point();
+  return tmp;
+}
+
+JackknifeTimeSeries & JackknifeTimeSeries::M_eff_three_point()
+{
+  JackknifeTimeSeries tmp(*this);
+  is_defined[0]=0;
+  is_defined[Nt]=0;
+  for (int t=1; t<Nt; t++) {
+    if (tmp.is_defined[t+1] && tmp.is_defined[t] && tmp.is_defined[t-1]) {
+      Jk[t]=Meff_three_point(tmp.Jk[t-1],tmp.Jk[t],tmp.Jk[t+1],t,Nt);
+      is_definted[t]=1;
+    } else
+      is_defined[t]=0;
+  }
+  return *this;
+}
+
+JackknifeTimeSeries M_eff_three_point(const JackknifeTimeSeries & JT)
+{
+  JackknifeTimeSeries tmp(JT);
+  tmp.M_eff_three_point();
+  return tmp;
+}
+
 //Abs (member function)
 JackknifeTimeSeries & JackknifeTimeSeries::Abs()
 {
@@ -628,11 +671,11 @@ JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt,
     t_last=t;
   }
   fin.close();
-  fin.open(jks_file.c_str());
+  ifstream fin2(jks_file.c_str());
   for (int config_no=0; config_no<N; config_no++) {
     for (t=0; t<=Nt; t++) {
       if (result.ReturnIsDefined(t)) {
-	if (!getline(fin,line)) {
+	if (!getline(fin2,line)) {
 	  //Error: I think I'd rather have it abort here.
 	  cout << "ReadTimeSeriesFile: Too few lines in jks file.\n";
 	  JackknifeTimeSeries tmp;
@@ -657,7 +700,7 @@ JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt,
       }
     }
   }
-  if (getline(fin,line)) {
+  if (getline(fin2,line)) {
     //Error: I think I'd rather have it abort here.
     cout << "ReadTimeSeriesFile: Too many lines in jks file.\n";
     JackknifeTimeSeries tmp;

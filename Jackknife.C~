@@ -352,6 +352,32 @@ Jackknife Exp(const Jackknife & J)
   return tmp;
 }
 
+//Meff_two_point (friend function)
+Jackknife Meff_two_point(const Jackknife & C1, const Jackknife & C2, int t, int Nt)
+{
+  Jackknife result=C1;
+  int N=result.ReturnN();
+  result.ave=meff_two_point(C1.ReturnAve(),C2.ReturnAve(),t,Nt);
+  for (int i=0; i<N; i++) {
+    result.jk[i]=meff_two_point(C1.ReturnJk(i),C2.ReturnJk(i),t,Nt);
+  }
+  result.CalcAll();
+  return result;
+}
+
+//Meff_three_point (friend function)
+Jackknife Meff_three_point(const Jackknife & C1, const Jackknife & C2, const Jackknife & C3, int t, int Nt)
+{
+  Jackknife result=C1;
+  int N=result.ReturnN();
+  result.ave=meff_three_point(C1.ReturnAve(),C2.ReturnAve(),C3.ReturnAve(),t,Nt);
+  for (int i=0; i<N; i++) {
+    result.jk[i]=meff_three_point(C1.ReturnJk(i),C2.ReturnJk(i),C3.ReturnJk(i),t,Nt);
+  }
+  result.CalcAll();
+  return result;
+}
+
 //Phi (member function)
 Jackknife & Jackknife::Phi(int tau_x, int tau_y, int tau_z)
 {
@@ -387,6 +413,25 @@ Jackknife Phi_Phi0(const Jackknife & J, int tau_x, int tau_y, int tau_z, double 
 {
   Jackknife tmp(J);
   tmp.Phi_Phi0(tau_x,tau_y,tau_z,phi0);
+  return tmp;
+}
+
+//dPhi (member function)
+Jackknife & Jackknife::dPhi(int tau_x, int tau_y, int tau_z)
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=dphi_func(jk[i],tau_x,tau_y,tau_z);
+  }
+  ave=dphi_func(ave,tau_x,tau_y,tau_z);
+  CalcAll();
+  return *this;
+}
+
+//dPhi (friend function)
+Jackknife dPhi(const Jackknife & J, int tau_x, int tau_y, int tau_z)
+{
+  Jackknife tmp(J);
+  tmp.dPhi(tau_x,tau_y,tau_z);
   return tmp;
 }
 

@@ -3,6 +3,7 @@
 
 #include <complex>
 #include "jackknife.h"
+#include "data_read_in.h"
 
 class DoubleJackknifeTimeSeries;
 class DoubleJackknifeCmplxTimeSeries;

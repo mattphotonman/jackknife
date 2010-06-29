@@ -436,6 +436,49 @@ JackknifeTimeSeries M_eff(const JackknifeTimeSeries & JT)
   return tmp;
 }
 
+JackknifeTimeSeries & JackknifeTimeSeries::M_eff_two_point()
+{
+  JackknifeTimeSeries tmp(*this);
+  is_defined[0]=0;
+  for (int t=1; t<=Nt; t++) {
+    if (tmp.is_defined[t] && tmp.is_defined[t-1]) {
+      Jk[t]=Meff_two_point(tmp.Jk[t-1],tmp.Jk[t],t,Nt);
+      is_defined[t]=1;
+    } else
+      is_defined[t]=0;
+  }
+  return *this;
+}
+
+JackknifeTimeSeries M_eff_two_point(const JackknifeTimeSeries & JT)
+{
+  JackknifeTimeSeries tmp(JT);
+  tmp.M_eff_two_point();
+  return tmp;
+}
+
+JackknifeTimeSeries & JackknifeTimeSeries::M_eff_three_point()
+{
+  JackknifeTimeSeries tmp(*this);
+  is_defined[0]=0;
+  is_defined[Nt]=0;
+  for (int t=1; t<Nt; t++) {
+    if (tmp.is_defined[t+1] && tmp.is_defined[t] && tmp.is_defined[t-1]) {
+      Jk[t]=Meff_three_point(tmp.Jk[t-1],tmp.Jk[t],tmp.Jk[t+1],t,Nt);
+      is_defined[t]=1;
+    } else
+      is_defined[t]=0;
+  }
+  return *this;
+}
+
+JackknifeTimeSeries M_eff_three_point(const JackknifeTimeSeries & JT)
+{
+  JackknifeTimeSeries tmp(JT);
+  tmp.M_eff_three_point();
+  return tmp;
+}
+
 //Abs (member function)
 JackknifeTimeSeries & JackknifeTimeSeries::Abs()
 {

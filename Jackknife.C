@@ -5,6 +5,7 @@
 using namespace std;
 #include "jackknife.h"
 #include "zeta_func.h"
+#include "eff_masses.h"
 
 
 //Jackknife class
@@ -350,6 +351,32 @@ Jackknife Exp(const Jackknife & J)
   Jackknife tmp(J);
   tmp.Exp();
   return tmp;
+}
+
+//Meff_two_point (friend function)
+Jackknife Meff_two_point(const Jackknife & C1, const Jackknife & C2, int t, int Nt)
+{
+  Jackknife result=C1;
+  int N=result.ReturnN();
+  result.ave=meff_two_point(C1.ReturnAve(),C2.ReturnAve(),t,Nt);
+  for (int i=0; i<N; i++) {
+    result.jk[i]=meff_two_point(C1.ReturnJk(i),C2.ReturnJk(i),t,Nt);
+  }
+  result.CalcAll();
+  return result;
+}
+
+//Meff_three_point (friend function)
+Jackknife Meff_three_point(const Jackknife & C1, const Jackknife & C2, const Jackknife & C3, int t, int Nt)
+{
+  Jackknife result=C1;
+  int N=result.ReturnN();
+  result.ave=meff_three_point(C1.ReturnAve(),C2.ReturnAve(),C3.ReturnAve(),t,Nt);
+  for (int i=0; i<N; i++) {
+    result.jk[i]=meff_three_point(C1.ReturnJk(i),C2.ReturnJk(i),C3.ReturnJk(i),t,Nt);
+  }
+  result.CalcAll();
+  return result;
 }
 
 //Phi (member function)
