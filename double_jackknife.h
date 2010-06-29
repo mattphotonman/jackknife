@@ -53,6 +53,8 @@ class DoubleJackknife
   DoubleJackknife & operator/=(double d);
   DoubleJackknife & Log();
   friend DoubleJackknife Log(const DoubleJackknife & J);
+  DoubleJackknife & Sqrt();
+  friend DoubleJackknife Sqrt(const DoubleJackknife & J);
   DoubleJackknife & Abs();
   friend DoubleJackknife Abs(const DoubleJackknife & J);
   friend DoubleJackknife Abs(const DoubleJackknifeCmplx & J);

@@ -29,6 +29,7 @@ class DoubleJackknife
   double ReturnAve() const;
   double ReturnErr() const;
   double ReturnJk(int i) const;
+  double ReturnJkErr(int i) const;
   double ReturnDoubleJk(int i, int j) const;
   int ReturnN() const;
   int IsComplex() const { return 0; }
@@ -81,6 +82,7 @@ class DoubleJackknifeCmplx
   complex<double> ReturnAve() const;
   double ReturnErr() const;
   complex<double> ReturnJk(int i) const;
+  double ReturnJkErr(int i) const;
   complex<double> ReturnDoubleJk(int i, int j) const;
   int ReturnN() const;
   int IsComplex() const { return 1; }

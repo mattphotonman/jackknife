@@ -4,6 +4,7 @@
 #include <complex>
 #include "jackknife.h"
 #include "double_jackknife.h"
+#include "jackknife_time_series.h"
 
 class DoubleJackknifeTimeSeries
 {
@@ -61,7 +62,7 @@ class DoubleJackknifeTimeSeries
   double Normalize();
   friend DoubleJackknifeTimeSeries Combine(const DoubleJackknifeTimeSeries & JT1, const DoubleJackknifeTimeSeries & JT2);
   //friend DoubleJackknifeTimeSeries ReadWMEData(const WMEDataReadIn & D);
-  //friend void OutputJk(string filename, const DoubleJackknifeTimeSeries & JT);
+  friend void OutputJk(string filename, const DoubleJackknifeTimeSeries & JT);
 };
 
 class DoubleJackknifeCmplxTimeSeries

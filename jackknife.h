@@ -52,6 +52,10 @@ class Jackknife
   Jackknife & operator/=(double d);
   Jackknife & Log();
   friend Jackknife Log(const Jackknife & J);
+  Jackknife & Sqrt();
+  friend Jackknife Sqrt(const Jackknife & J);
+  Jackknife & Exp();
+  friend Jackknife Exp(const Jackknife & J);
   Jackknife & Abs();
   friend Jackknife Abs(const Jackknife & J);
   friend Jackknife Abs(const JackknifeCmplx & J);
@@ -62,6 +66,7 @@ class Jackknife
   friend void OutputJk(string filename, const JackknifeTimeSeries & JT);
   friend DoubleJackknife Combine(const DoubleJackknife & J1, const DoubleJackknife & J2);
   friend JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt, int N);
+  friend Jackknife ReadTextFile(string file, int N);
 };
 
 class JackknifeCmplx

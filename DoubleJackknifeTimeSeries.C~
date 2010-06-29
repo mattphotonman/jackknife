@@ -164,6 +164,37 @@ int DoubleJackknifeTimeSeries::ReturnN() const
   return N;
 }
 
+//Takes a JackknifeTimeSeries object, undoes it, then calculates 
+//double jackknife values to put into the current DoubleJackknifeTimeSeries
+//object.
+//NOTE: ONLY WORKS for quantities that depend linearly on original data.
+DoubleJackknifeTimeSeries & DoubleJackknifeTimeSeries::FromSingleJk(const JackknifeTimeSeries & JT)
+{
+  delete [] Jk;
+  delete [] is_defined;
+  N=JT.N;
+  Nt=JT.Nt;
+  Jk=new DoubleJackknife[Nt+1];
+  is_defined=new int [Nt+1];
+  for (int t=0; t<=Nt; t++) {
+    Jk[t].FromSingleJk(JT.Jk[t]);
+    if (JT.ReturnIsDefined(t)) {
+      is_defined[t]=1;
+    } else {
+      is_defined[t]=0;
+    }
+  }
+  return *this;
+}
+
+//Friend function version of the above.
+DoubleJackknifeTimeSeries FromSingleJk(const JackknifeTimeSeries & JT)
+{
+  DoubleJackknifeTimeSeries tmp;
+  tmp.FromSingleJk(JT);
+  return tmp;
+}
+
 //Addition
 DoubleJackknifeTimeSeries DoubleJackknifeTimeSeries::operator+(const DoubleJackknifeTimeSeries & JT) const
 {
@@ -558,9 +589,7 @@ DoubleJackknifeTimeSeries Combine(const DoubleJackknifeTimeSeries & JT1, const D
   return tmp;
 }
 
-/*
-//Output jackknife values to a file in the appropriate format for Sam's
-//fitter (friend function)
+//Output jackknife values and errors to a file (friend function)
 void OutputJk(string filename, const DoubleJackknifeTimeSeries & JT)
 {
   ofstream fout(filename.c_str());
@@ -573,7 +602,6 @@ void OutputJk(string filename, const DoubleJackknifeTimeSeries & JT)
 	fout << t << " " << JT.ReturnJk(t,i) << "\n";
   fout.close();
 }
-*/
 
 //Output average and errors to a file
 //not a member or friend function
@@ -746,6 +774,37 @@ int DoubleJackknifeCmplxTimeSeries::ReturnNt() const
 int DoubleJackknifeCmplxTimeSeries::ReturnN() const
 {
   return N;
+}
+
+//Takes a JackknifeCmplxTimeSeries object, undoes it, then calculates 
+//double jackknife values to put into the current
+//DoubleJackknifeCmplxTimeSeries object.
+//NOTE: ONLY WORKS for quantities that depend linearly on original data.
+DoubleJackknifeCmplxTimeSeries & DoubleJackknifeCmplxTimeSeries::FromSingleJk(const JackknifeCmplxTimeSeries & JT)
+{
+  delete [] Jk;
+  delete [] is_defined;
+  N=JT.N;
+  Nt=JT.Nt;
+  Jk=new DoubleJackknifeCmplx[Nt+1];
+  is_defined=new int [Nt+1];
+  for (int t=0; t<=Nt; t++) {
+    Jk[t].FromSingleJk(JT.Jk[t]);
+    if (JT.ReturnIsDefined(t)) {
+      is_defined[t]=1;
+    } else {
+      is_defined[t]=0;
+    }
+  }
+  return *this;
+}
+
+//Friend function version of the above.
+DoubleJackknifeCmplxTimeSeries FromSingleJk(const JackknifeCmplxTimeSeries & JT)
+{
+  DoubleJackknifeCmplxTimeSeries tmp;
+  tmp.FromSingleJk(JT);
+  return tmp;
 }
 
 //Addition

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <complex>
 using namespace std;
@@ -312,6 +313,44 @@ Jackknife Log(const Jackknife & J)
   return tmp;
 }
 
+//Sqrt (member function)
+Jackknife & Jackknife::Sqrt()
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=sqrt(jk[i]);
+  }
+  ave=sqrt(ave);
+  CalcAll();
+  return *this;
+}
+
+//Sqrt (friend function)
+Jackknife Sqrt(const Jackknife & J)
+{
+  Jackknife tmp(J);
+  tmp.Sqrt();
+  return tmp;
+}
+
+//Exp (member function)
+Jackknife & Jackknife::Exp()
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=exp(jk[i]);
+  }
+  ave=exp(ave);
+  CalcAll();
+  return *this;
+}
+
+//Exp (friend function)
+Jackknife Exp(const Jackknife & J)
+{
+  Jackknife tmp(J);
+  tmp.Exp();
+  return tmp;
+}
+
 //Abs (member function)
 Jackknife & Jackknife::Abs()
 {
@@ -399,6 +438,47 @@ Jackknife Combine(const Jackknife & J1, const Jackknife & J2)
   return tmp;
 }
 
+//Reads in a text file containing the average followed by the jackknife values
+//on successive lines.  (Friend function)
+Jackknife ReadTextFile(string file, int N)
+{
+  if (N<2) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTextFile: N must be >= for a Jackknife object, but was given N=" << N << ".\n";
+    Jackknife tmp;
+    return tmp;
+  }
+  
+  Jackknife result(N);
+  ifstream fin(file.c_str());
+  string line;
+  if (!getline(fin,line)) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTextFile: File empty.\n";
+    Jackknife tmp;
+    return tmp;
+  }
+  result.ave=atof(line.c_str());
+  for (int i=0; i<N; i++) {
+    if (!getline(fin,line)) {
+      //Error: I think I'd rather have it abort here.
+      cout << "ReadTextFile: File ended at jackknife value " << i << "\n";
+      Jackknife tmp;
+      return tmp;
+    }
+    result.jk[i]=atof(line.c_str());
+  }
+  if (getline(fin,line)) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTextFile: File didn't end after last jackknife value.\n";
+    Jackknife tmp;
+    return tmp;
+  }
+  fin.close();
+  result.CalcAll();
+  return result;
+}
+  
 
 
 //JackknifeCmplx class

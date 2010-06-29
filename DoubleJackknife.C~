@@ -126,6 +126,17 @@ double DoubleJackknife::ReturnJk(int i) const
   return jk[i].ReturnAve();
 }
 
+//Return the error on the ith jackknife value
+double DoubleJackknife::ReturnJkErr(int i) const
+{
+  if (i<0 || i>=N) {
+    //Error: I think I'd rather have it abort here.
+    cout << "i must be 0<=i<N, but received i=" << i << ".  Returning error on first jackknife value instead.\n";
+    i=0;
+  }
+  return jk[i].ReturnErr();
+}
+
 //Return double jackknife value i, j.
 double DoubleJackknife::ReturnDoubleJk(int i, int j) const
 {
@@ -163,6 +174,43 @@ double DoubleJackknife::Unjackknife(int i) const
       unjk+=jk[j].ReturnAve();
   unjk-=((double) N-2)*jk[i].ReturnAve();
   return unjk;
+}
+
+//Takes a Jackknife object, undoes it, then calculates double jackknife
+//values to put into the current DoubleJackknife object.
+//NOTE: ONLY WORKS for quantities that depend linearly on original data.
+DoubleJackknife & DoubleJackknife::FromSingleJk(const Jackknife & J)
+{
+  delete [] jk;
+  N=J.N;
+  jk=new Jackknife [N];
+  double unjks[N];
+  double sum=0.0;
+  for (int i=0; i<N; i++) {
+    unjks[i]=J.Unjackknife(i);
+    sum+=unjks[i];
+  }
+  for (int i=0; i<N; i++) {
+    Jackknife tmp(N-1);
+    jk[i]=tmp;
+    jk[i].ave=J.ReturnJk(i);
+    for (int j=0; j<i; j++)
+      jk[i].jk[j]=(sum-unjks[i]-unjks[j])/double(N-2);
+    for (int j=i+1; j<N; j++)
+      jk[i].jk[j-1]=(sum-unjks[i]-unjks[j])/double(N-2);
+    jk[i].CalcAll();
+  }
+  ave=J.ave;
+  err=J.err;
+  return *this;
+}
+
+//Friend function version of the above.
+DoubleJackknife FromSingleJk(const Jackknife & J)
+{
+  DoubleJackknife tmp;
+  tmp.FromSingleJk(J);
+  return tmp;
 }
 
 //Addition
@@ -547,6 +595,17 @@ complex<double> DoubleJackknifeCmplx::ReturnJk(int i) const
   return jk[i].ReturnAve();
 }
 
+//Return the error on the ith jackknife value
+double DoubleJackknifeCmplx::ReturnJkErr(int i) const
+{
+  if (i<0 || i>=N) {
+    //Error: I think I'd rather have it abort here.
+    cout << "i must be 0<=i<N, but received i=" << i << ".  Returning first jackknife value instead.\n";
+    i=0;
+  }
+  return jk[i].ReturnErr();
+}
+
 //Return double jackknife value i, j.
 complex<double> DoubleJackknifeCmplx::ReturnDoubleJk(int i, int j) const
 {
@@ -584,6 +643,43 @@ complex<double> DoubleJackknifeCmplx::Unjackknife(int i) const
       unjk+=jk[j].ReturnAve();
   unjk-=((double) N-2)*jk[i].ReturnAve();
   return unjk;
+}
+
+//Takes a JackknifeCmplx object, undoes it, then calculates double jackknife
+//values to put into the current DoubleJackknifeCmplx object.
+//NOTE: ONLY WORKS for quantities that depend linearly on original data.
+DoubleJackknifeCmplx & DoubleJackknifeCmplx::FromSingleJk(const JackknifeCmplx & J)
+{
+  delete [] jk;
+  N=J.N;
+  jk=new JackknifeCmplx [N];
+  complex<double> unjks[N];
+  complex<double> sum=0.0;
+  for (int i=0; i<N; i++) {
+    unjks[i]=J.Unjackknife(i);
+    sum+=unjks[i];
+  }
+  for (int i=0; i<N; i++) {
+    JackknifeCmplx tmp(N-1);
+    jk[i]=tmp;
+    jk[i].ave=J.ReturnJk(i);
+    for (int j=0; j<i; j++)
+      jk[i].jk[j]=(sum-unjks[i]-unjks[j])/double(N-2);
+    for (int j=i+1; j<N; j++)
+      jk[i].jk[j-1]=(sum-unjks[i]-unjks[j])/double(N-2);
+    jk[i].CalcAll();
+  }
+  ave=J.ave;
+  err=J.err;
+  return *this;
+}
+
+//Friend function version of the above.
+DoubleJackknifeCmplx FromSingleJk(const JackknifeCmplx & J)
+{
+  DoubleJackknifeCmplx tmp;
+  tmp.FromSingleJk(J);
+  return tmp;
 }
 
 //Addition

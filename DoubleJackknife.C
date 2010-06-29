@@ -383,6 +383,25 @@ DoubleJackknife Log(const DoubleJackknife & J)
   return tmp;
 }
 
+//Sqrt (member function)
+DoubleJackknife & DoubleJackknife::Sqrt()
+{
+  for (int i=0; i<N; i++) {
+    jk[i].Sqrt();
+  }
+  ave=sqrt(ave);
+  CalcAll();
+  return *this;
+}
+
+//Sqrt (friend function)
+DoubleJackknife Sqrt(const DoubleJackknife & J)
+{
+  DoubleJackknife tmp(J);
+  tmp.Sqrt();
+  return tmp;
+}
+
 //Abs (member function)
 DoubleJackknife & DoubleJackknife::Abs()
 {
