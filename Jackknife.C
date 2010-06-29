@@ -5,6 +5,7 @@
 using namespace std;
 #include "jackknife.h"
 #include "zeta_func.h"
+#include "least_squares.h"
 
 
 //Jackknife class
@@ -536,6 +537,128 @@ Jackknife ReadTextFile(string file, int N)
   result.CalcAll();
   return result;
 }
+
+//Linear least squares fitting with one dependent variable.  This just
+//calls Simul_Lin_Least_Squares in the appropriate way, and is here
+//just for the convenience of not having to have an extra dimension
+//in some arrays if you're only doing fitting with one dependent
+//variable.
+int Lin_Least_Squares(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[])
+{
+  Jackknife** ytmp;
+  Jackknife*** ftmp;
+  
+  ytmp=new Jackknife* [1];
+  ytmp[0]=y;
+  
+  ftmp=new Jackknife** [1];
+  ftmp[0]=f;
+
+  int return_val=Simul_Lin_Least_Squares(1,Ncoeff,Ndata,ytmp,ftmp,C);
+  
+  //Free memory allocated in this function.
+  delete [] ytmp;
+  delete [] ftmp;
+
+  return return_val;
+}
+
+//Linear least squares fitting with in general multiple dependent
+//variables.  The format of the inputs and the outputs is exactly
+//the same as the linear_least_square function (LeastSquares.C).
+//The only difference between that and the current function is
+//that the current one does the fit under the jackknife.  Since
+//the objects are only single Jackknife objects, errors are "frozen".
+int Simul_Lin_Least_Squares(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[])
+{
+  double** ytmp;
+  double** sigma;
+  double*** ftmp;
+  double* Ctmp;
+
+  ytmp=new double* [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++)
+    ytmp[alpha]=new double [Ndata];
+  sigma=new double* [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++)
+    sigma[alpha]=new double [Ndata];
+  ftmp=new double** [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    ftmp[alpha]=new double* [Ncoeff];
+    for (int beta=0; beta<Ncoeff; beta++)
+      ftmp[alpha][beta]=new double [Ndata];
+  }
+  Ctmp=new double [Ncoeff];
+  
+  int N=y[0][0].ReturnN();
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++) {
+      if (y[alpha][i].ReturnN() != N) {
+	//Error: I think I'd rather have it abort here.
+	cout << "All y[alpha][i] must have same number of jackknife values.\n";
+	return 0;
+      }
+      for (int beta=0; beta<Ncoeff; beta++)
+	if (f[alpha][beta][i].ReturnN() != N) {
+	  //Error: I think I'd rather have it abort here.
+	  cout << "All f[alpha][beta][i] must have same number of jackknife values.\n";
+	  return 0;
+	}
+    }
+  
+  Jackknife tmp(N);
+  for (int beta=0; beta<Ncoeff; beta++)
+    C[beta]=tmp;
+
+  //Frozen errors
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++)
+      sigma[alpha][i]=y[alpha][i].ReturnErr();
+  
+  //Fit the average
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++) {
+      ytmp[alpha][i]=y[alpha][i].ReturnAve();
+      for (int beta=0; beta<Ncoeff; beta++)
+	ftmp[alpha][beta][i]=f[alpha][beta][i].ReturnAve();
+    }
+  linear_least_square(Nvar,Ncoeff,Ndata,ytmp,sigma,ftmp,Ctmp);
+  for (int beta=0; beta<Ncoeff; beta++)
+    C[beta].ave=Ctmp[beta];
+  
+  //Fit the jackknife blocks
+  for (int j=0; j<N; j++) {
+    for (int alpha=0; alpha<Nvar; alpha++)
+      for (int i=0; i<Ndata; i++) {
+	ytmp[alpha][i]=y[alpha][i].ReturnJk(j);
+	for (int beta=0; beta<Ncoeff; beta++)
+	  ftmp[alpha][beta][i]=f[alpha][beta][i].ReturnJk(j);
+      }
+    linear_least_square(Nvar,Ncoeff,Ndata,ytmp,sigma,ftmp,Ctmp);
+    for (int beta=0; beta<Ncoeff; beta++)
+      C[beta].jk[j]=Ctmp[beta];
+  }
+  
+  //Have to do CalcAll to all of the C[beta]
+  for (int beta=0; beta<Ncoeff; beta++)
+    C[beta].CalcAll();
+  
+  //Free memory allocated in this function
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    delete [] ytmp[alpha];
+    delete [] sigma[alpha];
+    for (int beta=0; beta<Ncoeff; beta++)
+      delete [] ftmp[alpha][beta];
+    delete [] ftmp[alpha];
+  }
+  delete [] ytmp;
+  delete [] sigma;
+  delete [] ftmp;
+  delete [] Ctmp;
+
+  return 1;
+}
+
   
 //Outputs the average followed by the jackknife values to a text file.
 //Not a friend or a member function.
