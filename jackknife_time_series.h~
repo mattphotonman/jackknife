@@ -4,6 +4,9 @@
 #include <complex>
 #include "jackknife.h"
 
+class DoubleJackknifeTimeSeries;
+class DoubleJackknifeCmplxTimeSeries;
+
 class JackknifeTimeSeries
 {
  private:
@@ -14,6 +17,7 @@ class JackknifeTimeSeries
   int *is_defined;
  public:
   friend class JackknifeCmplxTimeSeries;
+  friend class DoubleJackknifeTimeSeries;
   explicit JackknifeTimeSeries(int nt=1, int n=2);
   JackknifeTimeSeries(const JackknifeTimeSeries & JT);
   JackknifeTimeSeries(int nt, const Jackknife & J);
@@ -22,6 +26,7 @@ class JackknifeTimeSeries
   int ReturnIsDefined(int t) const;
   double ReturnAve(int t) const;
   double ReturnErr(int t) const;
+  double ReturnJk(int t, int i) const;
   int ReturnNt() const;
   int ReturnN() const;
   int IsComplex() const { return 0; }
@@ -42,8 +47,14 @@ class JackknifeTimeSeries
   JackknifeTimeSeries & operator/=(double d);
   JackknifeTimeSeries & Reverse();
   friend JackknifeTimeSeries Reverse(const JackknifeTimeSeries & JT);
+  JackknifeTimeSeries & Translate(int t);
+  friend JackknifeTimeSeries Translate(int t, const JackknifeTimeSeries & JT);
+  JackknifeTimeSeries & TranslateReverse(int t);
+  friend JackknifeTimeSeries TranslateReverse(int t, const JackknifeTimeSeries & JT);
   JackknifeTimeSeries & M_eff();
   friend JackknifeTimeSeries M_eff(const JackknifeTimeSeries & JT);
+  JackknifeTimeSeries & Abs();
+  friend JackknifeTimeSeries Abs(const JackknifeTimeSeries & JT);
   friend JackknifeTimeSeries Abs(const JackknifeCmplxTimeSeries & JT);
   friend JackknifeTimeSeries Real(const JackknifeCmplxTimeSeries & JT);
   friend JackknifeTimeSeries Imag(const JackknifeCmplxTimeSeries & JT);
@@ -51,6 +62,7 @@ class JackknifeTimeSeries
   friend JackknifeTimeSeries Combine(const JackknifeTimeSeries & JT1, const JackknifeTimeSeries & JT2);
   friend JackknifeTimeSeries ReadWMEData(const WMEDataReadIn & D);
   friend void OutputJk(string filename, const JackknifeTimeSeries & JT);
+  friend JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt, int N);
 };
 
 class JackknifeCmplxTimeSeries
@@ -63,6 +75,7 @@ class JackknifeCmplxTimeSeries
   int *is_defined;
  public:
   friend class JackknifeTimeSeries;
+  friend class DoubleJackknifeCmplxTimeSeries;
   explicit JackknifeCmplxTimeSeries(int nt=1, int n=2);
   JackknifeCmplxTimeSeries(const JackknifeCmplxTimeSeries & JT);
   JackknifeCmplxTimeSeries(int nt, const JackknifeCmplx & J);
@@ -71,6 +84,7 @@ class JackknifeCmplxTimeSeries
   int ReturnIsDefined(int t) const;
   complex<double> ReturnAve(int t) const;
   double ReturnErr(int t) const;
+  complex<double> ReturnJk(int t, int i) const;
   int ReturnNt() const;
   int ReturnN() const;
   int IsComplex() const { return 1; }
@@ -91,6 +105,10 @@ class JackknifeCmplxTimeSeries
   JackknifeCmplxTimeSeries & operator/=(complex<double> c);
   JackknifeCmplxTimeSeries & Reverse();
   friend JackknifeCmplxTimeSeries Reverse(const JackknifeCmplxTimeSeries & JT);
+  JackknifeCmplxTimeSeries & Translate(int t);
+  friend JackknifeCmplxTimeSeries Translate(int t, const JackknifeCmplxTimeSeries & JT);
+  JackknifeCmplxTimeSeries & TranslateReverse(int t);
+  friend JackknifeCmplxTimeSeries TranslateReverse(int t, const JackknifeCmplxTimeSeries & JT);
   JackknifeCmplxTimeSeries & Abs();
   friend JackknifeTimeSeries Abs(const JackknifeCmplxTimeSeries & JT);
   JackknifeCmplxTimeSeries & Real();

@@ -127,6 +127,22 @@ double JackknifeTimeSeries::ReturnErr(int t) const
   }
 }
 
+//Return the ith jackknife value at t
+double JackknifeTimeSeries::ReturnJk(int t, int i) const
+{
+  if (t<0 || t>Nt || !is_defined[t]) {
+    //Error:  I think I'd rather have it abort here.
+    cout << "No data at t=" << t << " in JackknifeTimeSeries.\n";
+    return 0.0;
+  }
+  if (i<0 || i>=N) {
+    //Error:  I think I'd rather have it abort here.
+    cout << "i must be 0<=i<N, but received i=" << i << ".\n";
+    return 0.0;
+  }
+  return Jk[t].ReturnJk(i);
+}
+
 //Return Nt
 int JackknifeTimeSeries::ReturnNt() const
 {
@@ -328,8 +344,74 @@ JackknifeTimeSeries Reverse(const JackknifeTimeSeries & JT)
   return tmp;
 }
 
+JackknifeTimeSeries & JackknifeTimeSeries::Translate(int t)
+{
+  if (t>0 && t<=Nt) {
+    for (int tt=Nt; tt>=0; tt--) {
+      if (ReturnIsDefined(tt-t)) {
+	Jk[tt]=Jk[tt-t];
+	is_defined[tt]=1;
+      } else {
+	is_defined[tt]=0;
+      }
+    }
+  } else if (t<0 && t>=-Nt) {
+    for (int tt=0; tt<=Nt; tt++) {
+      if (ReturnIsDefined(tt-t)) {
+	Jk[tt]=Jk[tt-t];
+	is_defined[tt]=1;
+      } else {
+	is_defined[tt]=0;
+      }
+    }
+  } else if (t<-Nt || t>Nt) {
+    cout << "Can only translate by amount -Nt<=delta_t<=Nt, but received delta_t=" << t << ".  Do nothing.\n";
+  }
+  //If t==0 then do nothing.
+  return *this;
+}
+
+JackknifeTimeSeries Translate(int t, const JackknifeTimeSeries & JT)
+{
+  JackknifeTimeSeries tmp(JT);
+  tmp.Translate(t);
+  return tmp;
+}
+
+JackknifeTimeSeries & JackknifeTimeSeries::TranslateReverse(int t)
+{
+  if (t>=0 && t<=Nt) {
+    JackknifeTimeSeries tmp(*this);
+    for (int tt=0; tt<=t; tt++) {
+      Jk[t-tt]=tmp.Jk[tt];
+      is_defined[t-tt]=tmp.is_defined[tt];
+    }
+    for (int tt=t+1; tt<=Nt; tt++)
+      is_defined[tt]=0;
+  } else if (t>Nt && t<=2*Nt) {
+    JackknifeTimeSeries tmp(*this);
+    for (int tt=0; tt<=Nt; tt++)
+      if (t-tt <= Nt) {
+	Jk[t-tt]=tmp.Jk[tt];
+	is_defined[t-tt]=tmp.is_defined[tt];
+      }
+    for (int tt=t-Nt-1; tt>=0; tt--)
+      is_defined[tt]=0;
+  } else {
+    cout << "Can only translate and reverse for translations 0<=delta_t<=2*Nt, but received delta_t=" << t << ".  Do nothing.\n";
+  }
+  return *this;
+}
+
+JackknifeTimeSeries TranslateReverse(int t, const JackknifeTimeSeries & JT)
+{
+  JackknifeTimeSeries tmp(JT);
+  tmp.TranslateReverse(t);
+  return tmp;
+}
+
 //Note that there will be a problem if the argument of the
-//log is negative, which happens with Jk[t] and Jk[t-1]
+//log is negative, which happens when Jk[t] and Jk[t-1]
 //have different signs.  To avoid this it's best to only
 //do M_eff to something that's positive definite (e.g.
 //something you've already taken the Abs of).
@@ -495,6 +577,121 @@ void OutputAve(string filename, const JackknifeTimeSeries & JT)
   fout.close();
 }
 
+//Reads in a JackknifeTimeSeries from two text files, one containing
+//the average values, and one containing the jackknife values
+JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt, int N)
+{
+  if (N<2) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTimeSeriesFile: N must be >= 2 for a JackknifeTimeSeries object, but was given N=" << N << ".\n";
+    JackknifeTimeSeries tmp;
+    return tmp;
+  }
+  if (Nt<1) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTimeSeriesFile: Nt must be >= 1 for a JackknifeTimeSeries object, but was given Nt=" << Nt << ".\n";
+    JackknifeTimeSeries tmp;
+    return tmp;
+  }
+
+  JackknifeTimeSeries result(Nt,N);
+  ifstream fin(ave_file.c_str());
+  int t_last=-1, t, n_defined=0;
+  string line;
+  double errors[Nt+1];
+  while (getline(fin,line)) {
+    string vals[20];
+    int nvals=split(line,vals,20);
+    if (nvals!=3) {
+      //Error: I think I'd rather have it abort here.
+      cout << "ReadTimeSeriesFile: Should be three numbers in each column but read " << nvals << ".\n";
+      JackknifeTimeSeries tmp;
+      return tmp;
+    }
+    t=atoi(vals[0].c_str());
+    if (t<=t_last) {
+      //Error: I think I'd rather have it abort here.
+      cout << "ReadTimeSeriesFile: Times should be in increasing order.\n";
+      JackknifeTimeSeries tmp;
+      return tmp;
+    }
+    if (t>Nt) {
+      //Error: I think I'd rather have it abort here.
+      cout << "ReadTimeSeriesFile: t must be <= Nt, but read t=" << t << ".\n";
+      JackknifeTimeSeries tmp;
+      return tmp;
+    }
+    result.Jk[t].ave=atof(vals[1].c_str());
+    result.is_defined[t]=1;
+    errors[t]=atof(vals[2].c_str());
+    n_defined++;
+    t_last=t;
+  }
+  fin.close();
+  ifstream fin2(jks_file.c_str());
+  for (int config_no=0; config_no<N; config_no++) {
+    for (t=0; t<=Nt; t++) {
+      if (result.ReturnIsDefined(t)) {
+	if (!getline(fin2,line)) {
+	  //Error: I think I'd rather have it abort here.
+	  cout << "ReadTimeSeriesFile: Too few lines in jks file.\n";
+	  JackknifeTimeSeries tmp;
+	  return tmp;
+	}
+	string vals[20];
+	int nvals=split(line,vals,20);
+	if (nvals!=2) {
+	  //Error: I think I'd rather have it abort here.
+	  cout << "ReadTimeSeriesFile: Wrong number of columns in jks file.\n";
+	  JackknifeTimeSeries tmp;
+	  return tmp;
+	}
+	int t_read=atoi(vals[0].c_str());
+	if (t_read != t) {
+	  //Error: I think I'd rather have it abort here.
+	  cout << "ReadTimeSeriesFile: Data for configuration " << config_no << " in wrong order.\n";
+	  JackknifeTimeSeries tmp;
+	  return tmp;
+	}
+	result.Jk[t].jk[config_no]=atof(vals[1].c_str());
+      }
+    }
+  }
+  if (getline(fin2,line)) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTimeSeriesFile: Too many lines in jks file.\n";
+    JackknifeTimeSeries tmp;
+    return tmp;
+  }
+  
+  //Do CalcAll at each time slice.
+  for (t=0; t<=Nt; t++)
+    if (result.ReturnIsDefined(t))
+      result.Jk[t].CalcAll();
+  
+  //Compare errors read to errors calculated.
+  double tol=1E-6;
+  for (t=0; t<=Nt; t++) 
+    if (result.ReturnIsDefined(t))
+      if (errors[t] != 0) {
+	double reldiff=abs((result.ReturnErr(t)-errors[t])/errors[t]);
+	if (reldiff>tol) {
+	  //Error: I think I'd rather have it abort here.
+	  cout << "ReadTimeSeriesFile: Error read and calculated disagree at time slice " << t << "\n";
+	  JackknifeTimeSeries tmp;
+	  return tmp;
+	} 
+      } else if ( abs(result.ReturnErr(t))>tol ) {
+	//Error: I think I'd rather have it abort here.
+	cout << "ReadTimeSeriesFile: Error read and calculated disagree at time slice " << t << ".  Was read to be 0.\n";
+	JackknifeTimeSeries tmp;
+	return tmp;
+      }
+  
+  //Read successfully, return result object.
+  return result;
+}
+
 
 
 
@@ -616,6 +813,22 @@ double JackknifeCmplxTimeSeries::ReturnErr(int t) const
   } else {
     return Jk[t].ReturnErr();
   }
+}
+
+//Return the ith jackknife value at t
+complex<double> JackknifeCmplxTimeSeries::ReturnJk(int t, int i) const
+{
+  if (t<0 || t>Nt || !is_defined[t]) {
+    //Error:  I think I'd rather have it abort here.
+    cout << "No data at t=" << t << " in JackknifeCmplxTimeSeries.\n";
+    return 0.0;
+  }
+  if (i<0 || i>=N) {
+    //Error:  I think I'd rather have it abort here.
+    cout << "i must be 0<=i<N, but received i=" << i << ".\n";
+    return 0.0;
+  }
+  return Jk[t].ReturnJk(i);
 }
 
 //Return Nt
@@ -816,6 +1029,72 @@ JackknifeCmplxTimeSeries Reverse(const JackknifeCmplxTimeSeries & JT)
 {
   JackknifeCmplxTimeSeries tmp(JT);
   tmp.Reverse();
+  return tmp;
+}
+
+JackknifeCmplxTimeSeries & JackknifeCmplxTimeSeries::Translate(int t)
+{
+  if (t>0 && t<=Nt) {
+    for (int tt=Nt; tt>=0; tt--) {
+      if (ReturnIsDefined(tt-t)) {
+	Jk[tt]=Jk[tt-t];
+	is_defined[tt]=1;
+      } else {
+	is_defined[tt]=0;
+      }
+    }
+  } else if (t<0 && t>=-Nt) {
+    for (int tt=0; tt<=Nt; tt++) {
+      if (ReturnIsDefined(tt-t)) {
+	Jk[tt]=Jk[tt-t];
+	is_defined[tt]=1;
+      } else {
+	is_defined[tt]=0;
+      }
+    }
+  } else if (t<-Nt || t>Nt) {
+    cout << "Can only translate by amount -Nt<=delta_t<=Nt, but received delta_t=" << t << ".  Do nothing.\n";
+  }
+  //If t==0 then do nothing.
+  return *this;
+}
+
+JackknifeCmplxTimeSeries Translate(int t, const JackknifeCmplxTimeSeries & JT)
+{
+  JackknifeCmplxTimeSeries tmp(JT);
+  tmp.Translate(t);
+  return tmp;
+}
+
+JackknifeCmplxTimeSeries & JackknifeCmplxTimeSeries::TranslateReverse(int t)
+{
+  if (t>=0 && t<=Nt) {
+    JackknifeCmplxTimeSeries tmp(*this);
+    for (int tt=0; tt<=t; tt++) {
+      Jk[t-tt]=tmp.Jk[tt];
+      is_defined[t-tt]=tmp.is_defined[tt];
+    }
+    for (int tt=t+1; tt<=Nt; tt++)
+      is_defined[tt]=0;
+  } else if (t>Nt && t<=2*Nt) {
+    JackknifeCmplxTimeSeries tmp(*this);
+    for (int tt=0; tt<=Nt; tt++)
+      if (t-tt <= Nt) {
+	Jk[t-tt]=tmp.Jk[tt];
+	is_defined[t-tt]=tmp.is_defined[tt];
+      }
+    for (int tt=t-Nt-1; tt>=0; tt--)
+      is_defined[tt]=0;
+  } else {
+    cout << "Can only translate and reverse for translations 0<=delta_t<=2*Nt, but received delta_t=" << t << ".  Do nothing.\n";
+  }
+  return *this;
+}
+
+JackknifeCmplxTimeSeries TranslateReverse(int t, const JackknifeCmplxTimeSeries & JT)
+{
+  JackknifeCmplxTimeSeries tmp(JT);
+  tmp.TranslateReverse(t);
   return tmp;
 }
 

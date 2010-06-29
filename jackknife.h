@@ -8,6 +8,8 @@ class JackknifeTimeSeries;
 class JackknifeCmplxTimeSeries;
 class WMEDataReadIn;
 class WMECmplxDataReadIn;
+class DoubleJackknife;
+class DoubleJackknifeCmplx;
 
 class Jackknife
 {
@@ -18,6 +20,7 @@ class Jackknife
   double err;
  public:
   friend class JackknifeCmplx;
+  friend class DoubleJackknife;
   explicit Jackknife(int n=2);
   Jackknife(const Jackknife & J);
   Jackknife(int n, double d);
@@ -27,9 +30,11 @@ class Jackknife
   Jackknife & CalcAll();
   double ReturnAve() const;
   double ReturnErr() const;
+  double ReturnJk(int i) const;
   int ReturnN() const;
   int IsComplex() const { return 0; }
   double Unjackknife(int i) const;
+  friend DoubleJackknife FromSingleJk(const Jackknife & J);
   Jackknife operator+(const Jackknife & J) const;
   Jackknife & operator+=(const Jackknife & J);
   Jackknife operator-(const Jackknife & J) const;
@@ -55,6 +60,8 @@ class Jackknife
   friend Jackknife Combine(const Jackknife & J1, const Jackknife & J2);
   friend JackknifeTimeSeries ReadWMEData(const WMEDataReadIn & D);
   friend void OutputJk(string filename, const JackknifeTimeSeries & JT);
+  friend DoubleJackknife Combine(const DoubleJackknife & J1, const DoubleJackknife & J2);
+  friend JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt, int N);
 };
 
 class JackknifeCmplx
@@ -66,6 +73,7 @@ class JackknifeCmplx
   double err;
  public:
   friend class Jackknife;
+  friend class DoubleJackknifeCmplx;
   explicit JackknifeCmplx(int n=2);
   JackknifeCmplx(const JackknifeCmplx & J);
   JackknifeCmplx(int n, complex<double> c);
@@ -75,9 +83,11 @@ class JackknifeCmplx
   JackknifeCmplx & CalcAll();
   complex<double> ReturnAve() const;
   double ReturnErr() const;
+  complex<double> ReturnJk(int i) const;
   int ReturnN() const;
   int IsComplex() const { return 1; }
   complex<double> Unjackknife(int i) const;
+  friend DoubleJackknifeCmplx FromSingleJk(const JackknifeCmplx & J);
   JackknifeCmplx operator+(const JackknifeCmplx & J) const;
   JackknifeCmplx & operator+=(const JackknifeCmplx & J);
   JackknifeCmplx operator-(const JackknifeCmplx & J) const;
@@ -104,6 +114,7 @@ class JackknifeCmplx
   friend JackknifeCmplx Combine(const JackknifeCmplx & J1, const JackknifeCmplx & J2);
   friend JackknifeCmplxTimeSeries ReadWMECmplxData(const WMECmplxDataReadIn & D);
   friend void OutputJk(string filename, const JackknifeCmplxTimeSeries & JT);
+  friend DoubleJackknifeCmplx Combine(const DoubleJackknifeCmplx & J1, const DoubleJackknifeCmplx & J2);
 };
 
 #endif

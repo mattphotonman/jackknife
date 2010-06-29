@@ -108,6 +108,17 @@ double Jackknife::ReturnErr() const
   return err;
 }
 
+//Return the ith jackknife value
+double Jackknife::ReturnJk(int i) const
+{
+  if (i<0 || i>=N) {
+    //Error: I think I'd rather have it abort here.
+    cout << "i must be 0<=i<N, but received i=" << i << ".  Returning first jackknife value instead.\n";
+    i=0;
+  }
+  return jk[i];
+}
+
 //Return N
 int Jackknife::ReturnN() const
 {
@@ -495,6 +506,17 @@ complex<double> JackknifeCmplx::ReturnAve() const
 double JackknifeCmplx::ReturnErr() const
 {
   return err;
+}
+
+//Return the ith jackknife value
+complex<double> JackknifeCmplx::ReturnJk(int i) const
+{
+  if (i<0 || i>=N) {
+    //Error: I think I'd rather have it abort here.
+    cout << "i must be 0<=i<N, but received i=" << i << ".  Returning first jackknife value instead.\n";
+    i=0;
+  }
+  return jk[i];
 }
 
 //Return N

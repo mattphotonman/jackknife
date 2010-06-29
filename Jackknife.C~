@@ -301,7 +301,26 @@ Jackknife Log(const Jackknife & J)
   return tmp;
 }
 
+//Abs (member function)
+Jackknife & Jackknife::Abs()
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=abs(jk[i]);
+  }
+  ave=abs(ave);
+  CalcAll();
+  return *this;
+}
+
 //Abs (friend function)
+Jackknife Abs(const Jackknife & J)
+{
+  Jackknife tmp(J);
+  tmp.Abs();
+  return tmp;
+}
+
+//Abs (friend function with a JackknifeCmplx argument)
 Jackknife Abs(const JackknifeCmplx & J)
 {
   Jackknife tmp(J.N);
