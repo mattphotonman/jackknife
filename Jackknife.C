@@ -4,6 +4,7 @@
 #include <complex>
 using namespace std;
 #include "jackknife.h"
+#include "zeta_func.h"
 
 
 //Jackknife class
@@ -348,6 +349,63 @@ Jackknife Exp(const Jackknife & J)
 {
   Jackknife tmp(J);
   tmp.Exp();
+  return tmp;
+}
+
+//Phi (member function)
+Jackknife & Jackknife::Phi(int tau_x, int tau_y, int tau_z)
+{
+  ave=phi_func(ave,tau_x,tau_y,tau_z);
+  for (int i=0; i<N; i++) {
+    jk[i]=phi_func_phi0(jk[i],tau_x,tau_y,tau_z,ave);
+  }
+  CalcAll();
+  return *this;
+}
+
+//Phi (friend function)
+Jackknife Phi(const Jackknife & J, int tau_x, int tau_y, int tau_z)
+{
+  Jackknife tmp(J);
+  tmp.Phi(tau_x,tau_y,tau_z);
+  return tmp;
+}
+
+//Phi_Phi0 (member function)
+Jackknife & Jackknife::Phi_Phi0(int tau_x, int tau_y, int tau_z, double phi0)
+{
+  ave=phi_func_phi0(ave,tau_x,tau_y,tau_z,phi0);
+  for (int i=0; i<N; i++) {
+    jk[i]=phi_func_phi0(jk[i],tau_x,tau_y,tau_z,ave);
+  }
+  CalcAll();
+  return *this;
+}
+
+//Phi_Phi0 (friend function)
+Jackknife Phi_Phi0(const Jackknife & J, int tau_x, int tau_y, int tau_z, double phi0)
+{
+  Jackknife tmp(J);
+  tmp.Phi_Phi0(tau_x,tau_y,tau_z,phi0);
+  return tmp;
+}
+
+//dPhi (member function)
+Jackknife & Jackknife::dPhi(int tau_x, int tau_y, int tau_z)
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=dphi_func(jk[i],tau_x,tau_y,tau_z);
+  }
+  ave=dphi_func(ave,tau_x,tau_y,tau_z);
+  CalcAll();
+  return *this;
+}
+
+//dPhi (friend function)
+Jackknife dPhi(const Jackknife & J, int tau_x, int tau_y, int tau_z)
+{
+  Jackknife tmp(J);
+  tmp.dPhi(tau_x,tau_y,tau_z);
   return tmp;
 }
 

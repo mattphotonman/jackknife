@@ -56,6 +56,10 @@ class Jackknife
   friend Jackknife Sqrt(const Jackknife & J);
   Jackknife & Exp();
   friend Jackknife Exp(const Jackknife & J);
+  Jackknife & Phi(int tau_x, int tau_y, int tau_z);
+  friend Jackknife Phi(const Jackknife & J, int tau_x, int tau_y, int tau_z);
+  Jackknife & Phi_Phi0(int tau_x, int tau_y, int tau_z, double phi0);
+  friend Jackknife Phi_Phi0(const Jackknife & J, int tau_x, int tau_y, int tau_z, double phi0);
   Jackknife & Abs();
   friend Jackknife Abs(const Jackknife & J);
   friend Jackknife Abs(const JackknifeCmplx & J);
@@ -121,5 +125,7 @@ class JackknifeCmplx
   friend void OutputJk(string filename, const JackknifeCmplxTimeSeries & JT);
   friend DoubleJackknifeCmplx Combine(const DoubleJackknifeCmplx & J1, const DoubleJackknifeCmplx & J2);
 };
+
+void OutputAveJk(string filename, const Jackknife & J);
 
 #endif
