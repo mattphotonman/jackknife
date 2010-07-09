@@ -71,6 +71,13 @@ void linear_least_square(int Nvar, int Ncoeff, int Ndata, double** y, double** s
   
   for (int beta=0; beta<Ncoeff; beta++)
     C[beta]=b[beta+1];
+
+  //Free memory allocated in this function.
+  delete [] indx;
+  for (int gamma=0; gamma<Ncoeff; gamma++)
+    delete [] a[gamma+1];
+  delete [] a;
+  delete [] b;
 }
 
 /*--------------------------------------------
@@ -187,3 +194,10 @@ void lubksb(double** a, int n, int *indx, double b[])
     b[i]=sum/a[i][i];  //Store a component of the solution vector X.
   }  //All done!
 }
+
+//Calculates chi^2 for data fitted by the linear_least_square function.
+//Takes arguments in the same form as linear_least_square, but arguments
+//should be passed to it AFTER first passing them to linear_least_square.
+double chisq(int Nvar, int Ncoeff, int Ndata, double** y, double** sigma, double*** f, double C[])
+{
+  //editing here

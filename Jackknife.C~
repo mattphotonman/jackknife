@@ -551,7 +551,7 @@ int Lin_Least_Squares(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackkn
   ytmp=new Jackknife* [1];
   ytmp[0]=y;
   
-  ftmp=new Jacknife** [1];
+  ftmp=new Jackknife** [1];
   ftmp[0]=f;
 
   int return_val=Simul_Lin_Least_Squares(1,Ncoeff,Ndata,ytmp,ftmp,C);
@@ -646,7 +646,7 @@ int Simul_Lin_Least_Squares(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jack
   //Free memory allocated in this function
   for (int alpha=0; alpha<Nvar; alpha++) {
     delete [] ytmp[alpha];
-    deleta [] sigma[alpha];
+    delete [] sigma[alpha];
     for (int beta=0; beta<Ncoeff; beta++)
       delete [] ftmp[alpha][beta];
     delete [] ftmp[alpha];

@@ -194,3 +194,27 @@ void lubksb(double** a, int n, int *indx, double b[])
     b[i]=sum/a[i][i];  //Store a component of the solution vector X.
   }  //All done!
 }
+
+//Calculates chi^2 for data fitted by the linear_least_square function.
+//Takes arguments in the same form as linear_least_square, but arguments
+//should be passed to it AFTER first passing them to linear_least_square.
+double chisq(int Nvar, int Ncoeff, int Ndata, double** y, double** sigma, double*** f, double C[])
+{
+  double result=0.0;
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++) {
+      double beta_sum=0.0;
+      for (int beta=0; beta<Ncoeff; beta++)
+	beta_sum+=C[beta]*f[alpha][beta][i];
+      double tmp=(y[alpha][i]-beta_sum)/sigma[alpha][i];
+      result+=tmp*tmp;
+    }
+  
+  return result;
+}
+
+//chi^2 per d.o.f. = chi^2/(Nvar*Ndata-Ncoeff)
+double chisq_per_dof(int Nvar, int Ncoeff, int Ndata, double** y, double** sigma, double*** f, double C[])
+{
+  return chisq(Nvar,Ncoeff,Ndata,y,sigma,f,C)/double(Nvar*Ndata-Ncoeff);
+}

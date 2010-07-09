@@ -659,6 +659,60 @@ int Simul_Lin_Least_Squares(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jack
   return 1;
 }
 
+//Calculates chi^2 (under the jackknife) for the output of 
+//Lin_Least_Squares.  Arguments are the same as for
+//Lin_Least_Squares, but they must be given to this function
+//AFTER first being given to Lin_Least_Squares.
+Jackknife ChiSq(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[])
+{
+  Jackknife** ytmp;
+  Jackknife*** ftmp;
+  
+  ytmp=new Jackknife* [1];
+  ytmp[0]=y;
+  
+  ftmp=new Jackknife** [1];
+  ftmp[0]=f;
+
+  Jackknife return_val=Simul_ChiSq(1,Ncoeff,Ndata,ytmp,ftmp,C);
+  
+  //Free memory allocated in this function.
+  delete [] ytmp;
+  delete [] ftmp;
+
+  return return_val;
+}
+
+//chi^2 per d.o.f. = chi^2/(Ndata-Ncoeff) (note: Nvar=1)
+Jackknife ChiSq_Per_Dof(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[])
+{
+  return ChiSq(Ncoeff,Ndata,y,f,C)/double(Ndata-Ncoeff);
+}
+
+//Calculates chi^2 (under the jackknife) for the output of 
+//Simul_Lin_Least_Squares.  Arguments are the same as for
+//Simul_Lin_Least_Squares, but they must be given to this function
+//AFTER first being given to Simul_Lin_Least_Squares.
+Jackknife Simul_ChiSq(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[])
+{
+  Jackknife result=0.0*C[0];
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++) {
+      Jackknife beta_sum=0.0*C[0];
+      for (int beta=0; beta<Ncoeff; beta++)
+	beta_sum+=C[beta]*f[alpha][beta][i];
+      Jackknife tmp=(y[alpha][i]-beta_sum)/(y[alpha][i].ReturnErr());
+      result+=tmp*tmp;
+    }
+  
+  return result;
+}
+
+//chi^2 per d.o.f. = chi^2/(Nvar*Ndata-Ncoeff)
+Jackknife Simul_ChiSq_Per_Dof(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[])
+{
+  return Simul_ChiSq(Nvar,Ncoeff,Ndata,y,f,C)/double(Nvar*Ndata-Ncoeff);
+}
   
 //Outputs the average followed by the jackknife values to a text file.
 //Not a friend or a member function.
