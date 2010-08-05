@@ -479,6 +479,30 @@ JackknifeTimeSeries M_eff_three_point(const JackknifeTimeSeries & JT)
   return tmp;
 }
 
+//Bin (member function)
+//Note: Only valid if it depends linearly on original data.
+JackknifeTimeSeries & JackknifeTimeSeries::Bin(int bin_size)
+{
+  for (int t=0; t<=Nt; t++)
+    if (is_defined[t]) {
+      Jackknife tmp(Jk[t]);
+      tmp.Bin(bin_size); //Have to do it this way or else it gets
+                         //confused with JackknifeTimeSeries::Bin
+      N=tmp.ReturnN();
+      Jk[t]=tmp;
+    }
+  return *this;
+}
+
+//Bin (friend function)
+//Note: Only valid if it depends linearly on original data.
+JackknifeTimeSeries Bin(const JackknifeTimeSeries & JT, int bin_size)
+{
+  JackknifeTimeSeries tmp(JT);
+  tmp.Bin(bin_size);
+  return tmp;
+}
+
 //Abs (member function)
 JackknifeTimeSeries & JackknifeTimeSeries::Abs()
 {

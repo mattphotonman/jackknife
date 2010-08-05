@@ -58,6 +58,8 @@ class JackknifeTimeSeries
   friend JackknifeTimeSeries M_eff_two_point(const JackknifeTimeSeries & JT);
   JackknifeTimeSeries & M_eff_three_point();
   friend JackknifeTimeSeries M_eff_three_point(const JackknifeTimeSeries & JT);  
+  JackknifeTimeSeries & Bin(int bin_size);
+  friend JackknifeTimeSeries Bin(const JackknifeTimeSeries & JT, int bin_size);
   JackknifeTimeSeries & Abs();
   friend JackknifeTimeSeries Abs(const JackknifeTimeSeries & JT);
   friend JackknifeTimeSeries Abs(const JackknifeCmplxTimeSeries & JT);

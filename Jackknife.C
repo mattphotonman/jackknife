@@ -437,6 +437,60 @@ Jackknife dPhi(const Jackknife & J, int tau_x, int tau_y, int tau_z)
   return tmp;
 }
 
+//Bin (member function)
+//Note: Only valid if quantity depends linearly on data
+Jackknife & Jackknife::Bin(int bin_size)
+{
+  if (bin_size<1 || bin_size>=N) {
+    //Error: I think I'd rather have it abort here.
+    cout << "Bin size must be >=1 and <N.\n";
+    return *this;
+  } else if (bin_size==1)
+    return *this;
+  
+  //Bin the unjackknifed data
+  int Ntmp=N/bin_size;
+  int Nbins=Ntmp;
+  if (N%bin_size!=0) Nbins++;  //If it doesn't divide evenly then
+                               //make an extra bin that's smaller.
+  double binned[Nbins];
+  for (int bin_num=0; bin_num<Ntmp; bin_num++) {
+    binned[bin_num]=0.0;
+    for (int i=bin_num*bin_size; i<(bin_num+1)*bin_size; i++)
+      binned[bin_num]+=Unjackknife(i);
+    binned[bin_num]/=double(bin_size);
+  }
+  if (N%bin_size!=0) {
+    binned[Nbins-1]=0.0;
+    for (int i=Ntmp*bin_size; i<N; i++)
+      binned[Nbins-1]+=Unjackknife(i);
+    binned[Nbins-1]/=double(N-Ntmp*bin_size);
+  }
+
+  //Replace the data for this object with binned data
+  N=Nbins;
+  ave=0.0;
+  for (int i=0; i<N; i++)
+    ave+=binned[i];
+  ave/=double(N);
+  delete [] jk;
+  jk=new double [N];
+  for (int i=0; i<N; i++)
+    jk[i]=(double(N)*ave-binned[i])/double(N-1);
+
+  CalcAll();
+  return *this;
+}
+
+//Bin (friend function)
+//Note: Only valid if quantity depends linearly on data
+Jackknife Bin(const Jackknife & J, int bin_size)
+{
+  Jackknife tmp(J);
+  tmp.Bin(bin_size);
+  return tmp;
+}
+
 //Abs (member function)
 Jackknife & Jackknife::Abs()
 {

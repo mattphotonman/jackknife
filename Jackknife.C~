@@ -5,11 +5,8 @@
 using namespace std;
 #include "jackknife.h"
 #include "zeta_func.h"
-<<<<<<< HEAD
 #include "eff_masses.h"
-=======
 #include "least_squares.h"
->>>>>>> linear_least_squares
 
 
 //Jackknife class

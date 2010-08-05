@@ -465,7 +465,7 @@ JackknifeTimeSeries & JackknifeTimeSeries::M_eff_three_point()
   for (int t=1; t<Nt; t++) {
     if (tmp.is_defined[t+1] && tmp.is_defined[t] && tmp.is_defined[t-1]) {
       Jk[t]=Meff_three_point(tmp.Jk[t-1],tmp.Jk[t],tmp.Jk[t+1],t,Nt);
-      is_definted[t]=1;
+      is_defined[t]=1;
     } else
       is_defined[t]=0;
   }
