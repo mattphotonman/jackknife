@@ -7,6 +7,7 @@ using namespace std;
 #include "zeta_func.h"
 #include "eff_masses.h"
 #include "least_squares.h"
+#include "global_const.h"
 
 
 //Jackknife class

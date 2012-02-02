@@ -4,6 +4,7 @@
 using namespace std;
 #include "jackknife.h"
 #include "double_jackknife.h"
+#include "global_const.h"
 
 
 //DoubleJackknife class
