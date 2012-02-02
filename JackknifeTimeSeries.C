@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cmath>
 #include <complex>
+#include <cstdlib>
 using namespace std;
 #include "jackknife.h"
 #include "jackknife_time_series.h"

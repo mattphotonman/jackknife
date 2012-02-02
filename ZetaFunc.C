@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <cstdlib>
 using namespace std;
 #include "zeta_func.h"
 #include "global_const.h"
@@ -272,7 +273,7 @@ double G_func(double t, int tau[], double lambda, double lambda2)
       for (int n3=-N; n3<=N; n3++) {
 	int testval=n1*n1+n2*n2+n3*n3;
 	int xx=n1*tau[0]+n2*tau[1]+n3*tau[2];
-	int sgn_mult=1-2*abs(xx%2);
+	int sgn_mult=1-2*labs(long(xx%2));
 	if (testval>=lambda*lambda)
 	  out+=sgn_mult*exp(-double(testval)/t);
       }
