@@ -82,10 +82,35 @@ Jackknife & Jackknife::operator=(const Jackknife & J)
 Jackknife & Jackknife::CalcErr()
 {
   err=0;
-  for (int i=0; i<N; i++)
-    err+=(jk[i]-ave)*(jk[i]-ave);
-  err*=((double) N)/((double) (N-1));
-  err=sqrt(err);
+
+  if (jk_err_type<=0) {
+    //Using error estimator
+    //error^2 = N/(N-1) * sum( [ f(x^{jk}_i)-f(\bar{x}) ]^2 , i=0..N-1)
+    //Now I can't figure why I used the factor N/(N-1) rather than (N-1)/N.
+
+    for (int i=0; i<N; i++)
+      err+=(jk[i]-ave)*(jk[i]-ave);
+    err*=((double) N)/((double) (N-1));
+    err=sqrt(err);
+
+  } else if (jk_err_type>=1) {
+    //Using error estimator
+    //error^2 = (N-1)/N * sum( [ f(x^{jk}_i)-ave_jk ]^2 , i=0..N-1)
+    //where ave_jk = 1/N * sum( f(x^{jk}_i) , i=0..N-1) is the average
+    //of the jackknife values.
+    //This seems to be the more standard (and possibly more accurate) method.
+    
+    double ave_jk=0.0;
+    for (int i=0; i<N; i++)
+      ave_jk+=jk[i];
+    ave_jk/=double(N);
+    for (int i=0; i<N; i++)
+      err+=(jk[i]-ave_jk)*(jk[i]-ave_jk);
+    err*=double(N-1)/double(N);
+    err=sqrt(err);
+    
+  }
+  
   return *this;
 }
 
@@ -885,12 +910,39 @@ JackknifeCmplx & JackknifeCmplx::operator=(const JackknifeCmplx & J)
 JackknifeCmplx & JackknifeCmplx::CalcErr()
 {
   err=0;
-  for (int i=0; i<N; i++)
-    err+=real(conj(jk[i]-ave)*(jk[i]-ave)); //real just converts to a double,
-                                            //since this is the modulus squared
-                                            //it will already be a real number.
-  err*=((double) N)/((double) (N-1));
-  err=sqrt(err);
+
+  if (jk_err_type<=0) {
+    //Using error estimator
+    //error^2 = N/(N-1) * sum( | f(x^{jk}_i)-f(\bar{x}) |^2 , i=0..N-1)
+    //Now I can't figure why I used the factor N/(N-1) rather than (N-1)/N.
+    
+    for (int i=0; i<N; i++)
+      err+=real(conj(jk[i]-ave)*(jk[i]-ave)); //real just converts to a double,
+                                              //since this is the modulus squared
+                                              //it will already be a real number.
+    err*=((double) N)/((double) (N-1));
+    err=sqrt(err);
+
+  } else if (jk_err_type>=1) {
+    //Using error estimator
+    //error^2 = (N-1)/N * sum( | f(x^{jk}_i)-ave_jk |^2 , i=0..N-1)
+    //where ave_jk = 1/N * sum( f(x^{jk}_i) , i=0..N-1) is the average
+    //of the jackknife values.
+    //This seems to be the more standard (and possibly more accurate) method.
+
+    complex<double> ave_jk=0.0;
+    for (int i=0; i<N; i++)
+      ave_jk+=jk[i];
+    ave_jk/=double(N);
+    for (int i=0; i<N; i++)
+      err+=real(conj(jk[i]-ave_jk)*(jk[i]-ave_jk));  //real just converts to a double,
+                    //since this is the modulus squared
+                    //it will already be a real number.
+    err*=double(N-1)/double(N);
+    err=sqrt(err);
+    
+  }
+
   return *this;
 }
 
