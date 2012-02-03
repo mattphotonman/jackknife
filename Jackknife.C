@@ -173,6 +173,20 @@ double Jackknife::Unjackknife(int i) const
   return unjk;
 }
 
+//Takes an average and an array for the jackknife values and puts
+//that into the Jackknife object.
+Jackknife & Jackknife::FromArray(double ave_in, double jk_in[], int N_in)
+{
+  delete [] jk;
+  N=N_in;
+  jk=new double [N];
+  for (int i=0; i<N; i++)
+    jk[i]=jk_in[i];
+  ave=ave_in;
+  CalcAll();
+  return *this;
+}
+
 //Addition
 Jackknife Jackknife::operator+(const Jackknife & J) const
 {
@@ -639,7 +653,8 @@ Jackknife & Jackknife::ReadTextFile(string file, int Nfile)
   }
   fin.close();
 
-  //Read properly, now put values into Jackknife object.
+  //Read it properly, now put values into Jackknife object.
+  delete [] jk;
   N=Nfile;
   jk=new double [N];
   for (int i=0; i<N; i++)

@@ -69,7 +69,7 @@ class JackknifeTimeSeries
   friend JackknifeTimeSeries Combine(const JackknifeTimeSeries & JT1, const JackknifeTimeSeries & JT2);
   friend JackknifeTimeSeries ReadWMEData(const WMEDataReadIn & D);
   friend void OutputJk(string filename, const JackknifeTimeSeries & JT);
-  friend JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt, int N);
+  JackknifeTimeSeries & ReadTimeSeriesFile(string ave_file, string jks_file, int Ntfile, int Nfile);
 };
 
 class JackknifeCmplxTimeSeries

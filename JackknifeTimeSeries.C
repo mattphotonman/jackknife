@@ -647,117 +647,141 @@ void OutputAve(string filename, const JackknifeTimeSeries & JT)
 
 //Reads in a JackknifeTimeSeries from two text files, one containing
 //the average values, and one containing the jackknife values
-JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt, int N)
+JackknifeTimeSeries & JackknifeTimeSeries::ReadTimeSeriesFile(string ave_file, string jks_file, int Ntfile, int Nfile)
 {
-  if (N<2) {
+  if (Nfile<2) {
     //Error: I think I'd rather have it abort here.
-    cout << "ReadTimeSeriesFile: N must be >= 2 for a JackknifeTimeSeries object, but was given N=" << N << ".\n";
-    JackknifeTimeSeries tmp;
-    return tmp;
+    cout << "ReadTimeSeriesFile: N must be >= 2 for a JackknifeTimeSeries object, but was given N=" << Nfile << ".\n";
+    return *this;
   }
-  if (Nt<1) {
+  if (Ntfile<1) {
     //Error: I think I'd rather have it abort here.
-    cout << "ReadTimeSeriesFile: Nt must be >= 1 for a JackknifeTimeSeries object, but was given Nt=" << Nt << ".\n";
-    JackknifeTimeSeries tmp;
-    return tmp;
+    cout << "ReadTimeSeriesFile: Nt must be >= 1 for a JackknifeTimeSeries object, but was given Nt=" << Ntfile << ".\n";
+    return *this;
   }
 
-  JackknifeTimeSeries result(Nt,N);
+  double ave_tmp[Ntfile+1];
+  double jk_tmp[Ntfile+1][Nfile];
+  int is_defined_tmp[Ntfile+1];
+  for (int t=0; t<=Ntfile; t++)
+    is_defined_tmp[t]=0;
   ifstream fin(ave_file.c_str());
   int t_last=-1, t, n_defined=0;
   string line;
-  double errors[Nt+1];
+  double errors[Ntfile+1];
   while (getline(fin,line)) {
     string vals[20];
     int nvals=split(line,vals,20);
     if (nvals!=3) {
       //Error: I think I'd rather have it abort here.
       cout << "ReadTimeSeriesFile: Should be three numbers in each column but read " << nvals << ".\n";
-      JackknifeTimeSeries tmp;
-      return tmp;
+      return *this;
     }
     t=atoi(vals[0].c_str());
     if (t<=t_last) {
       //Error: I think I'd rather have it abort here.
       cout << "ReadTimeSeriesFile: Times should be in increasing order.\n";
-      JackknifeTimeSeries tmp;
-      return tmp;
+      return *this;
     }
-    if (t>Nt) {
+    if (t>Ntfile) {
       //Error: I think I'd rather have it abort here.
       cout << "ReadTimeSeriesFile: t must be <= Nt, but read t=" << t << ".\n";
-      JackknifeTimeSeries tmp;
-      return tmp;
+      return *this;
     }
-    result.Jk[t].ave=atof(vals[1].c_str());
-    result.is_defined[t]=1;
+    ave_tmp[t]=atof(vals[1].c_str());
+    is_defined_tmp[t]=1;
     errors[t]=atof(vals[2].c_str());
     n_defined++;
     t_last=t;
   }
   fin.close();
   ifstream fin2(jks_file.c_str());
-  for (int config_no=0; config_no<N; config_no++) {
-    for (t=0; t<=Nt; t++) {
-      if (result.ReturnIsDefined(t)) {
+  for (int config_no=0; config_no<Nfile; config_no++) {
+    for (t=0; t<=Ntfile; t++) {
+      if (is_defined_tmp[t]) {
 	if (!getline(fin2,line)) {
 	  //Error: I think I'd rather have it abort here.
 	  cout << "ReadTimeSeriesFile: Too few lines in jks file.\n";
-	  JackknifeTimeSeries tmp;
-	  return tmp;
+	  return *this;
 	}
 	string vals[20];
 	int nvals=split(line,vals,20);
 	if (nvals!=2) {
 	  //Error: I think I'd rather have it abort here.
 	  cout << "ReadTimeSeriesFile: Wrong number of columns in jks file.\n";
-	  JackknifeTimeSeries tmp;
-	  return tmp;
+	  return *this;
 	}
 	int t_read=atoi(vals[0].c_str());
 	if (t_read != t) {
 	  //Error: I think I'd rather have it abort here.
 	  cout << "ReadTimeSeriesFile: Data for configuration " << config_no << " in wrong order.\n";
-	  JackknifeTimeSeries tmp;
-	  return tmp;
+	  return *this;
 	}
-	result.Jk[t].jk[config_no]=atof(vals[1].c_str());
+	jk_tmp[t][config_no]=atof(vals[1].c_str());
       }
     }
   }
   if (getline(fin2,line)) {
     //Error: I think I'd rather have it abort here.
     cout << "ReadTimeSeriesFile: Too many lines in jks file.\n";
-    JackknifeTimeSeries tmp;
-    return tmp;
+    return *this;
   }
   
-  //Do CalcAll at each time slice.
-  for (t=0; t<=Nt; t++)
-    if (result.ReturnIsDefined(t))
-      result.Jk[t].CalcAll();
+  //Read in correctly, use arrays to build the object.
+  delete [] Jk;
+  delete [] is_defined;
+  N=Nfile;
+  Nt=Ntfile;
+  Jk=new Jackknife [Nt+1];
+  is_defined=new int [Nt+1];
+  for (t=0; t<=Nt; t++) {
+    if (is_defined_tmp[t])
+      Jk[t].FromArray(ave_tmp[t],jk_tmp[t],N);
+    else {
+      //still fill it with a blank Jackknife object
+      Jackknife tmp(N);
+      Jk[t]=tmp;
+    }
+    is_defined[t]=is_defined_tmp[t];
+  }
   
   //Compare errors read to errors calculated.
+  //Won't abort if they don't agree, just give a warning.
   double tol=1E-6;
-  for (t=0; t<=Nt; t++) 
-    if (result.ReturnIsDefined(t))
+  int any_disagree=0;
+  int disagree1[Nt+1], disagree2[Nt+1];
+  for (t=0; t<=Nt; t++) {
+    disagree1[t]=0;
+    disagree2[t]=0;
+    if (ReturnIsDefined(t))
       if (errors[t] != 0) {
-	double reldiff=abs((result.ReturnErr(t)-errors[t])/errors[t]);
+	double reldiff=abs((ReturnErr(t)-errors[t])/errors[t]);
 	if (reldiff>tol) {
-	  //Error: I think I'd rather have it abort here.
-	  cout << "ReadTimeSeriesFile: Error read and calculated disagree at time slice " << t << "\n";
-	  JackknifeTimeSeries tmp;
-	  return tmp;
+	  //cout << "ReadTimeSeriesFile: Error read and calculated disagree at time slice " << t << "\n";
+	  any_disagree=1;
+	  disagree1[t]=1;
 	} 
-      } else if ( abs(result.ReturnErr(t))>tol ) {
-	//Error: I think I'd rather have it abort here.
-	cout << "ReadTimeSeriesFile: Error read and calculated disagree at time slice " << t << ".  Was read to be 0.\n";
-	JackknifeTimeSeries tmp;
-	return tmp;
+      } else if ( abs(ReturnErr(t))>tol ) {
+	//cout << "ReadTimeSeriesFile: Error read and calculated disagree at time slice " << t << ".  Was read to be 0.\n";
+	any_disagree=1;
+	disagree2[t]=1;
       }
+  }
+
+  if (any_disagree) {
+    cout << "ReadTimeSeriesFile:  Warning -- Error read and calculated disagree at the following time slices:";
+    for (t=0; t<=Nt; t++)
+      if (disagree1[t])
+	cout << " " << t;
+    cout << "\n";
+    cout << "ReadTimeSeriesFile:  Warning -- Error read and calculated disagree because error read was 0 at the following time slices:";
+    for (t=0; t<=Nt; t++)
+      if (disagree2[t])
+	cout << " " << t;
+    cout << "\n";
+  }
   
-  //Read successfully, return result object.
-  return result;
+  return *this;
 }
 
 

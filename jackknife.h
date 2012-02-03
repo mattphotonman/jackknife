@@ -34,6 +34,7 @@ class Jackknife
   int ReturnN() const;
   int IsComplex() const { return 0; }
   double Unjackknife(int i) const;
+  Jackknife & FromArray(double ave_in, double jk_in[], int N_in);
   friend DoubleJackknife FromSingleJk(const Jackknife & J);
   Jackknife operator+(const Jackknife & J) const;
   Jackknife & operator+=(const Jackknife & J);
@@ -75,7 +76,6 @@ class Jackknife
   friend JackknifeTimeSeries ReadWMEData(const WMEDataReadIn & D);
   friend void OutputJk(string filename, const JackknifeTimeSeries & JT);
   friend DoubleJackknife Combine(const DoubleJackknife & J1, const DoubleJackknife & J2);
-  friend JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt, int N);
   Jackknife & ReadTextFile(string file, int Nfile);
   friend int Lin_Least_Squares(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[]);
   friend int Simul_Lin_Least_Squares(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[]);
