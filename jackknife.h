@@ -76,7 +76,7 @@ class Jackknife
   friend void OutputJk(string filename, const JackknifeTimeSeries & JT);
   friend DoubleJackknife Combine(const DoubleJackknife & J1, const DoubleJackknife & J2);
   friend JackknifeTimeSeries ReadTimeSeriesFile(string ave_file, string jks_file, int Nt, int N);
-  friend Jackknife ReadTextFile(string file, int N);
+  Jackknife & ReadTextFile(string file, int Nfile);
   friend int Lin_Least_Squares(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[]);
   friend int Simul_Lin_Least_Squares(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[]);
   friend Jackknife ChiSq(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[]);

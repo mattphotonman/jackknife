@@ -607,43 +607,47 @@ Jackknife Combine(const Jackknife & J1, const Jackknife & J2)
 
 //Reads in a text file containing the average followed by the jackknife values
 //on successive lines.  (Friend function)
-Jackknife ReadTextFile(string file, int N)
+Jackknife & Jackknife::ReadTextFile(string file, int Nfile)
 {
-  if (N<2) {
+  if (Nfile<2) {
     //Error: I think I'd rather have it abort here.
-    cout << "ReadTextFile: N must be >= for a Jackknife object, but was given N=" << N << ".\n";
-    Jackknife tmp;
-    return tmp;
+    cout << "ReadTextFile: N must be >= for a Jackknife object, but was given N=" << Nfile << ".\n";
+    return *this;
   }
-  
-  Jackknife result(N);
+
+  double jk_tmp[Nfile], ave_tmp;
   ifstream fin(file.c_str());
   string line;
   if (!getline(fin,line)) {
     //Error: I think I'd rather have it abort here.
     cout << "ReadTextFile: File empty.\n";
-    Jackknife tmp;
-    return tmp;
+    return *this;
   }
-  result.ave=atof(line.c_str());
-  for (int i=0; i<N; i++) {
+  ave_tmp=atof(line.c_str());
+  for (int i=0; i<Nfile; i++) {
     if (!getline(fin,line)) {
       //Error: I think I'd rather have it abort here.
       cout << "ReadTextFile: File ended at jackknife value " << i << "\n";
-      Jackknife tmp;
-      return tmp;
+      return *this;
     }
-    result.jk[i]=atof(line.c_str());
+    jk_tmp[i]=atof(line.c_str());
   }
   if (getline(fin,line)) {
     //Error: I think I'd rather have it abort here.
     cout << "ReadTextFile: File didn't end after last jackknife value.\n";
-    Jackknife tmp;
-    return tmp;
+    return *this;
   }
   fin.close();
-  result.CalcAll();
-  return result;
+
+  //Read properly, now put values into Jackknife object.
+  N=Nfile;
+  jk=new double [N];
+  for (int i=0; i<N; i++)
+    jk[i]=jk_tmp[i];
+  ave=ave_tmp;
+  
+  CalcAll();
+  return *this;
 }
 
 //Linear least squares fitting with one dependent variable.  This just
