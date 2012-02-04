@@ -139,5 +139,6 @@ class JackknifeCmplx
 };
 
 void OutputAveJk(string filename, const Jackknife & J);
+int ReadTextFiletoArray(string file, int N, double ave, double jk[]);
 
 #endif

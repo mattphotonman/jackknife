@@ -623,45 +623,15 @@ Jackknife Combine(const Jackknife & J1, const Jackknife & J2)
 //on successive lines.  (Friend function)
 Jackknife & Jackknife::ReadTextFile(string file, int Nfile)
 {
-  if (Nfile<2) {
-    //Error: I think I'd rather have it abort here.
-    cout << "ReadTextFile: N must be >= for a Jackknife object, but was given N=" << Nfile << ".\n";
-    return *this;
-  }
+  double ave_tmp, jk_tmp[Nfile];
+  int success=ReadTextFiletoArray(file,Nfile,ave_tmp,jk_tmp);
 
-  double jk_tmp[Nfile], ave_tmp;
-  ifstream fin(file.c_str());
-  string line;
-  if (!getline(fin,line)) {
-    //Error: I think I'd rather have it abort here.
-    cout << "ReadTextFile: File empty.\n";
+  if (!success)
     return *this;
-  }
-  ave_tmp=atof(line.c_str());
-  for (int i=0; i<Nfile; i++) {
-    if (!getline(fin,line)) {
-      //Error: I think I'd rather have it abort here.
-      cout << "ReadTextFile: File ended at jackknife value " << i << "\n";
-      return *this;
-    }
-    jk_tmp[i]=atof(line.c_str());
-  }
-  if (getline(fin,line)) {
-    //Error: I think I'd rather have it abort here.
-    cout << "ReadTextFile: File didn't end after last jackknife value.\n";
-    return *this;
-  }
-  fin.close();
 
   //Read it properly, now put values into Jackknife object.
-  delete [] jk;
-  N=Nfile;
-  jk=new double [N];
-  for (int i=0; i<N; i++)
-    jk[i]=jk_tmp[i];
-  ave=ave_tmp;
-  
-  CalcAll();
+  FromArray(ave_tmp,jk_tmp,Nfile);
+
   return *this;
 }
 
@@ -849,9 +819,42 @@ void OutputAveJk(string filename, const Jackknife & J)
   fout.precision(16);
   int N=J.ReturnN();
   fout << J.ReturnAve() << "\n";
-  for (int i=0; i<N; i++)
+  for (int i=0;i<N; i++)
     fout << J.ReturnJk(i) << "\n";
   fout.close();
+}
+
+int ReadTextFiletoArray(string file, int N, double ave, double jk[])
+{
+  if (N<2) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTextFiletoArray: N must be >=2 for a Jackknife object, but was given N=" << N << ".\n";
+    return 0;
+  }
+  
+  ifstream fin(file.c_str());
+  string line;
+  if (!getline(fin,line)) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTextFiletoArray: File empty.\n";
+    return 0;
+  }
+  ave=atof(line.c_str());
+  for (int i=0; i<N; i++) {
+    if (!getline(fin,line)) {
+      //Error: I think I'd rather have it abort here.
+      cout << "ReadTextFiletoArray: File ended at jackknife value " << i << "\n";
+      return 0;
+    }
+    jk[i]=atof(line.c_str());
+  }
+  if (getline(fin,line)) {
+    //Error: I think I'd rather have it abort here.
+    cout << "ReadTextFiletoArray: File didn't end after last jackknife value.\n";
+    return 0;
+  }
+  fin.close();
+  return 1;
 }
 
 
