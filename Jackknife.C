@@ -824,7 +824,7 @@ void OutputAveJk(string filename, const Jackknife & J)
   fout.close();
 }
 
-int ReadTextFiletoArray(string file, int N, double ave, double jk[])
+int ReadTextFiletoArray(string file, int N, double & ave, double jk[])
 {
   if (N<2) {
     //Error: I think I'd rather have it abort here.
