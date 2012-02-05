@@ -31,6 +31,7 @@ class JackknifeTimeSeries
   int ReturnNt() const;
   int ReturnN() const;
   int IsComplex() const { return 0; }
+  JackknifeTimeSeries & FromArray(double ave_in [], double** jk_in, int is_defined_in [], int Nt_in, int N_in);
   JackknifeTimeSeries operator+(const JackknifeTimeSeries & JT) const;
   JackknifeTimeSeries & operator+=(const JackknifeTimeSeries & JT);
   JackknifeTimeSeries operator-(const JackknifeTimeSeries & JT) const;
@@ -132,6 +133,7 @@ class JackknifeCmplxTimeSeries
 
 void OutputAve(string filename, const JackknifeTimeSeries & JT);
 void OutputAve(string filename, const JackknifeCmplxTimeSeries & JT);
+int ReadTimeSeriesFiletoArray(string ave_file, string jks_file, int Nt, int N, double ave [], double** jk, int is_defined [], double* errors=0);
 
 
 

@@ -620,7 +620,7 @@ Jackknife Combine(const Jackknife & J1, const Jackknife & J2)
 }
 
 //Reads in a text file containing the average followed by the jackknife values
-//on successive lines.  (Friend function)
+//on successive lines.
 Jackknife & Jackknife::ReadTextFile(string file, int Nfile)
 {
   double ave_tmp, jk_tmp[Nfile];
@@ -629,7 +629,7 @@ Jackknife & Jackknife::ReadTextFile(string file, int Nfile)
   if (!success)
     return *this;
 
-  //Read it properly, now put values into Jackknife object.
+  //Read it in properly, now put values into Jackknife object.
   FromArray(ave_tmp,jk_tmp,Nfile);
 
   return *this;
@@ -824,6 +824,9 @@ void OutputAveJk(string filename, const Jackknife & J)
   fout.close();
 }
 
+//Reads in a text file containing the average followed by N jackknife values
+//(where N is an input to the function), and puts them into the
+//arrays ave and jk.
 int ReadTextFiletoArray(string file, int N, double & ave, double jk[])
 {
   if (N<2) {
