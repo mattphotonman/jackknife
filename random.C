@@ -17,9 +17,15 @@
 
 using namespace std;
 
-//Returns a uniform random deviate between 0.0 and 1.0.  Set idum to any
-//negative value to initialize or reinitialize the sequence.
-double ran3(long *idum)
+//Original NR description:  Returns a uniform random deviate between 0.0 and 1.0.  
+//Set idum to any negative value to initialize or reinitialize the sequence.
+//My modifications:  I've changed it so that reinitialize isn't possible
+//anymore.  I never use this and it makes the code simpler.  It also alleviates
+//the problems I had putting long idum=-1 in the header file.  In my version
+//you can specify a seed in the argument to ran3 (the default is -1), but
+//this only does anything the very first time you call ran3 in your main
+//program, which is the only time that things are initialized.
+double ran3(long idum)
 {
   static int inext, inextp;
   static long ma[56];         //The value 56 (range ma[1..55]) is special and
@@ -28,9 +34,9 @@ double ran3(long *idum)
   long mj,mk;
   int i,ii,k;
   
-  if (*idum < 0 || iff == 0) {   //Initialization
+  if (iff == 0) {   //Initialization
     iff=1;
-    mj=labs(MSEED-labs(*idum));  //Initialize ma[55] using the see idum and the
+    mj=labs(MSEED-labs(idum));  //Initialize ma[55] using the seed idum and the
                                  //large number MSEED.
     mj %= MBIG;
     ma[55]=mj;
@@ -52,7 +58,6 @@ double ran3(long *idum)
       }
     inext=0;      //Prepare indices for our first generated number.
     inextp=31;    //The constant 31 is special; see Knuth.
-    *idum=1;
   }
   //Here is where we start, except on initialization.
   if (++inext == 56) inext=1;    //Increment inext and inextp, wrapping around
@@ -64,15 +69,17 @@ double ran3(long *idum)
   return mj*FAC;                 //and output the derived uniform deviate.
 }
 
-//Returns a normally distributed deviate with zero mean and unit variance,
-//using ran3(idum) as the source of uniform deviates. 
-double gasdev(long *idum)
+//Original NR description: Returns a normally distributed deviate with zero mean 
+//and unit variance, using ran3(idum) as the source of uniform deviates. 
+//My modifications: Don't allow for reinitialization.  See comments for ran3
+//function.  The function gasdev still has an argument idum which it passes
+//to ran3, but this is just a seed for ran3 if it's the first time ran3 has been
+//called, otherwise it does nothing.
+double gasdev(long idum)
 {
   static int iset=0;
   static double gset;
   double fac,rsq,v1,v2;
-  
-  if (*idum < 0) iset=0; //Reinitialize.
   
   if (iset == 0) {
     //We don't have an extra deviate handy, so pick two uniform numbers
