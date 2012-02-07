@@ -140,5 +140,7 @@ class JackknifeCmplx
 
 void OutputAveJk(string filename, const Jackknife & J);
 int ReadTextFiletoArray(string file, int N, double & ave, double jk[]);
+void JacksFromCovMat(double aves [], double** C, int Nvar, int Nsamp, Jackknife Jacks []);
+double Cov(const Jackknife & J1, const Jackknife & J2);
 
 #endif

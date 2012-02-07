@@ -105,7 +105,7 @@ double gasdev(long idum)
 
 //Given the means (aves) and covariance matrix (C) for Nvar random variables, produces
 //Nsamp samples of the Nvar variables, which are returned to the array rands.
-//The different samples are not auto-correlated to each other.
+//The different samples are not correlated to each other.
 void gauss_corr_variables(double aves [], double** C, int Nvar, int Nsamp, double** rands)
 {
   //Assumed array sizes.
@@ -115,6 +115,48 @@ void gauss_corr_variables(double aves [], double** C, int Nvar, int Nsamp, doubl
   //Output:
   //double rands[Nvar][Nsamp]
 
+  //Diagonalize C.
+  double lambda[Nvar];
+  double** S= new double* [Nvar];
+  for (int i=0; i<Nvar; i++)
+    S[i]=new double [Nvar];
+  diagonalize_symm(C,Nvar,lambda,S);
+
+  //Check that all the eigenvalues of C are non-negative.
+  for (int i=0; i<Nvar; i++)
+    if (lambda[i]<0) {
+      cout << "gauss_corr_variables: Error, negative eigenvalue of covariance matrix found.  Abort.\n";
+      exit(1);
+    }
+  
+  double u[Nvar];
+  for (int ii=0; ii<Nsamp; ii++) {
+    //For each sample, first generate random variables u[k],
+    //where
+    //<u[k]u[l]> = lambda[k]*delta[k][l]  (no sum on k)
+    //i.e. the u[k] are independent gaussian random variables
+    //with mean 0 and standard deviation sqrt(lambda[k]).
+    for (int k=0; k<Nvar; k++)
+      u[k]=gasdev()*sqrt(lambda[k]);
+
+    //If we define x[i]=sum(S[i][k]*u[k],k=0..Nvar-1), where
+    //S is the matrix we found that diagonalizes C, then
+    //<x[i]x[j]> = C[i][j]
+    //but the x[i] still have 0 mean.  Thus we want to take
+    //rands[i][ii]=x[i]+aves[i].
+    for (int i=0; i<Nvar; i++) {
+      rands[i][ii]=0.0;
+      for (int k=0; k<Nvar; k++)
+	rands[i][ii]+=S[i][k]*u[k];
+      rands[i][ii]+=aves[i];
+    }
+  }
+
+  
+  //Delete all memory allocated using "new" in this function
+  for (int i=0; i<Nvar; i++)
+    delete [] S[i];
+  delete [] S;
   
 }
 
@@ -124,8 +166,16 @@ void gauss_corr_variables(double aves [], double** C, int Nvar, int Nsamp, doubl
 //eigenvectors in S[0..N-1][0..N-1].  This function is just a wrapper
 //around nr functions tred2 and tqli, that also translates the index
 //numbering to nr conventions.
-void diagonalize(double** A, int N, double lambda[], double** S)
+void diagonalize_symm(double** A, int N, double lambda[], double** S)
 {
+  //Check that A is symmetric.
+  for (int i=0;i<N;i++)
+    for (int j=i+1;j<N;j++)
+      if (A[i][j]!=A[j][i]) {
+	cout << "diagonalize_symm:  Error, matrix not symmetric.  Abort.\n";
+	exit(1);
+      }
+  
   //Put matrix A into matrix "a" which has the indexing for nr
   //functions and which will be destroyed.
   double** a=new double* [N+1];

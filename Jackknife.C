@@ -9,6 +9,7 @@ using namespace std;
 #include "eff_masses.h"
 #include "least_squares.h"
 #include "global_const.h"
+#include "random.h"
 
 
 //Jackknife class
@@ -510,14 +511,17 @@ Jackknife & Jackknife::Bin(int bin_size)
 
   //Replace the data for this object with binned data
   N=Nbins;
-  ave=0.0;
+  double ave_bins=0.0;
   for (int i=0; i<N; i++)
-    ave+=binned[i];
-  ave/=double(N);
+    ave_bins+=binned[i];
+  ave_bins/=double(N);
+  if (jk_err_type<=0)
+    ave=ave_bins;
+  //if jk_err_type>=1 keep the old ave
   delete [] jk;
   jk=new double [N];
   for (int i=0; i<N; i++)
-    jk[i]=(double(N)*ave-binned[i])/double(N-1);
+    jk[i]=(double(N)*ave_bins-binned[i])/double(N-1);
 
   CalcAll();
   return *this;
@@ -810,7 +814,7 @@ Jackknife Simul_ChiSq_Per_Dof(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Ja
 {
   return Simul_ChiSq(Nvar,Ncoeff,Ndata,y,f,C)/double(Nvar*Ndata-Ncoeff);
 }
-  
+
 //Outputs the average followed by the jackknife values to a text file.
 //Not a friend or a member function.
 void OutputAveJk(string filename, const Jackknife & J)
@@ -858,6 +862,96 @@ int ReadTextFiletoArray(string file, int N, double & ave, double jk[])
   }
   fin.close();
   return 1;
+}
+
+//Takes a covariance matrix C[0..Nvar-1][0..Nvar-1] and a list of central
+//values aves[0..Nvar-1], and returns an array of Jackknife objects
+//Jacks[0..Nvar-1] that have the central values given by aves, are correlated
+//as in the covariance matrix C, and that have Nsamp jackknife blocks (Nsamp
+//is an input).  The Jackknife objects are constructed from fake data generated
+//using Gaussian random numbers (which are generated in the function 
+//gauss_corr_variables).
+//(neither a member nor a friend function)
+void JacksFromCovMat(double aves [], double** C, int Nvar, int Nsamp, Jackknife Jacks [])
+{
+  double** rands=new double* [Nvar];
+  for (int i=0; i<Nvar; i++)
+    rands[i]=new double [Nsamp];
+
+  //NsmpC = Nsamp*C.
+  double** NsmpC=new double* [Nvar];
+  for (int i=0; i<Nvar; i++) {
+    NsmpC[i]=new double [Nvar];
+    for (int j=0; j<Nvar; j++)
+      NsmpC[i][j]=Nsamp*C[i][j];
+  }
+  
+  //Generate data points with covariance matrix Nsamp*C.
+  //Since there will be Nsamp such data points, the averages
+  //will have covariance matrix C, which is what we want.
+  gauss_corr_variables(aves,NsmpC,Nvar,Nsamp,rands);
+
+  //Now rands[i] contains an array of size Nsamp.  These
+  //Nsamp values need to be jackknifed and fed into
+  //Jacks[i], with central value coming from aves[i].
+  double tot, jks[Nsamp];
+  for (int i=0; i<Nvar; i++) {
+    tot=0.0;
+    for (int j=0; j<Nsamp; j++)
+      tot+=rands[i][j];
+    for (int j=0; j<Nsamp; j++)
+      jks[j]=(tot-rands[i][j])/double(Nsamp-1);
+    Jacks[i].FromArray(aves[i],jks,Nsamp);
+  } 
+
+  //Free memory allocated in this function by "new".
+  for (int i=0; i<Nvar; i++) {
+    delete [] rands[i];
+    delete [] NsmpC[i];
+  }
+  delete [] rands;
+  delete [] NsmpC;
+}
+
+//Calculates the covariance between two jackknife objects.
+//The normalization is such that Cov(J,J)=J.err^2.
+//(neither a member nor a friend function)
+double Cov(const Jackknife & J1, const Jackknife & J2)
+{
+  int N=J1.ReturnN();
+  if (J2.ReturnN()!=N) {
+    //Error: I think I'd rather have it abort here.
+    cout << "Cov: Can't take the covariance of Jackknife objects of different size.\n";
+    return 0.0;
+  }
+  
+  double cov=0.0;
+  
+  if (jk_err_type<=0) {
+    //See CalcErr for explanation of jk_err_type.
+
+    for (int i=0; i<N; i++)
+      cov+=(J1.ReturnJk(i)-J1.ReturnAve())*(J2.ReturnJk(i)-J2.ReturnAve());
+    cov*=double(N)/double(N-1);
+    
+  } else if (jk_err_type>=1) {
+    //See CalcErr for explanation of jk_err_type.
+
+    double ave_jk1=0.0, ave_jk2=0.0;
+    for (int i=0; i<N; i++) {
+      ave_jk1+=J1.ReturnJk(i);
+      ave_jk2+=J2.ReturnJk(i);
+    }
+    ave_jk1/=double(N);
+    ave_jk2/=double(N);
+    for (int i=0; i<N; i++)
+      cov+=(J1.ReturnJk(i)-ave_jk1)*(J2.ReturnJk(i)-ave_jk2);
+    cov*=double(N-1)/double(N);
+
+  }
+
+  return cov;
+  
 }
 
 
