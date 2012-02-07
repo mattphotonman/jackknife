@@ -126,7 +126,7 @@ void gauss_corr_variables(double aves [], double** C, int Nvar, int Nsamp, doubl
 //numbering to nr conventions.
 void diagonalize(double** A, int N, double lambda[], double** S)
 {
-  //Put matrix A into matrix a which has the indexing for nr
+  //Put matrix A into matrix "a" which has the indexing for nr
   //functions and which will be destroyed.
   double** a=new double* [N+1];
   a[0]=0;
@@ -146,6 +146,11 @@ void diagonalize(double** A, int N, double lambda[], double** S)
     for (int j=0;j<N;j++)
       S[i][j]=a[i+1][j+1];
   }
+  
+  //Have to delete matrix "a" since it was declared locally.
+  for (int i=1;i<N+1;i++)
+    delete [] a[i];
+  delete [] a;
 }
 
 //Householder reduction of a real, symmetric matrix a[1..n][1..n]. On

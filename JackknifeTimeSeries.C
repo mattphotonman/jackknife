@@ -696,6 +696,12 @@ JackknifeTimeSeries & JackknifeTimeSeries::ReadTimeSeriesFile(string ave_file, s
     
   //Read it in correctly, now use arrays to build the object.
   FromArray(ave_tmp,jk_tmp,is_defined_tmp,Ntfile,Nfile);
+
+  //Have to delete jk_tmp now that we're done with it since it was
+  //declared locally.
+  for (int t=0; t<=Nfile; t++)
+    delete [] jk_tmp[t];
+  delete [] jk_tmp;
   
   //Compare errors read to errors calculated.
   //Won't abort if they don't agree, just give a warning.
