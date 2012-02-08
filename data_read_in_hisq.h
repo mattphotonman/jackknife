@@ -12,8 +12,9 @@ class Ensemb
   int *data_was_read;
   int **cov_was_read;
  public:
-  Ensemb(double mL, double mS, double mC, double beta, double L);
+  explicit Ensemb(double mL=-1, double mS=-1, double mC=-1, double beta=-1, double L=-1);
   virtual ~Ensemb();
+  Ensemb & operator=(const Ensemb & E);
   int AllDataCovRead() const;
   int AllDataRead() const;
   int AllCovRead() const;

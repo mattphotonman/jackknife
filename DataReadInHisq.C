@@ -58,6 +58,72 @@ Ensemb::~Ensemb()
   delete [] cov_was_read;
 }
 
+//Assignment operator
+//Deep copy
+Ensemb & Ensemb::operator=(const Ensemb & E)
+{
+  if (this == &E)
+    return *this;
+  
+  for (int i=0; i<N_data; i++) {
+    delete [] data_x[i];
+    delete [] cov_y[i];
+    delete [] cov_was_read[i];
+  }
+  delete [] data_x;
+  delete [] data_y;
+  delete [] cov_y;
+  delete [] data_was_read;
+  delete [] cov_was_read;
+
+  N_data=E.N_data;
+
+  //Didn't need to delete info since its size isn't variable.
+  for (int i=0; i<5; i++)
+    info[i]=E.info[i];
+  
+  if (N_data==0) {
+    data_x=0;
+    data_y=0;
+    cov_y=0;
+    data_was_read=0;
+    cov_was_read=0;
+    
+    return *this;
+  }
+  
+  data_x=new double* [N_data];
+  for (int i=0; i<N_data; i++) {
+    data_x[i]=new double [3];
+    for (int col=0; col<3; col++)
+      data_x[i][col]=E.data_x[i][col];
+  }
+  
+  data_y=new double [N_data];
+  for (int i=0; i<N_data; i++)
+    data_y[i]=E.data_y[i];
+  
+  cov_y=new double* [N_data];
+  for (int i=0; i<N_data; i++) {
+    cov_y[i]=new double [N_data];
+    for (int j=0; j<N_data; j++)
+      cov_y[i][j]=E.cov_y[i][j];
+  }
+  
+  data_was_read=new int [N_data];
+  for (int i=0; i<N_data; i++)
+    data_was_read[i]=E.data_was_read[i];
+  
+  cov_was_read=new int* [N_data];
+  for (int i=0; i<N_data; i++) {
+    cov_was_read[i]=new int [N_data];
+    for (int j=0; j<N_data; j++)
+      cov_was_read[i][j]=E.cov_was_read[i][j];
+  }
+  
+  return *this;
+}
+
 //Say if y values and covariances have been read for all data points.
 int Ensemb::AllDataCovRead() const
 {
@@ -524,6 +590,12 @@ void EnsembsToArrays(Ensemb E [], int N_ensemb, double** data_x, double* data_y,
   //double data_y[N]
   //double cov_y[N][N]
   //where N is the total number of data points in all ensembles.
+
+  //Check that all data has been read from the file for all ensembles.
+  if (!AllRead(E,N_ensemb)) {
+    cout << "EnsembsToArrays:  Not all data has been read.  Abort.\n";
+    exit(1);
+  }
   
   //Make an array with the number of data points contained in all
   //ensembles before a given one, and also count the total number
