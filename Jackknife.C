@@ -760,6 +760,189 @@ int Simul_Lin_Least_Squares(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jack
   return 1;
 }
 
+//Same as Lin_Least_Squares, but fully covariant fit.
+int Cov_Lin_Least_Squares(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[])
+{
+  Jackknife** ytmp;
+  Jackknife*** ftmp;
+  
+  ytmp=new Jackknife* [1];
+  ytmp[0]=y;
+  
+  ftmp=new Jackknife** [1];
+  ftmp[0]=f;
+
+  int return_val=Simul_Cov_Lin_Least_Squares(1,Ncoeff,Ndata,ytmp,ftmp,C);
+  
+  //Free memory allocated in this function.
+  delete [] ytmp;
+  delete [] ftmp;
+
+  return return_val;
+}
+
+//Same as Simul_Lin_Least_Squares, but doing a fully covariant fit.
+//The covariance matrix can be determined from the Jackknife objects,
+//and is frozen (i.e. same one used to fit all jackknife blocks and
+//the central value), since these are only single Jackknife objects.
+int Simul_Cov_Lin_Least_Squares(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[])
+{
+  double** ytmp;
+  double**** cov; 
+  double**** cov_inv;
+  double*** ftmp;
+  double* Ctmp;
+
+  ytmp=new double* [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++)
+    ytmp[alpha]=new double [Ndata];
+  
+  cov=new double*** [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    cov[alpha]=new double** [Ndata];
+    for (int i=0; i<Ndata; i++) {
+      cov[alpha][i]=new double* [Nvar];
+      for (int alpha_p; alpha_p<Nvar; alpha_p++)
+	cov[alpha][i][alpha_p]=new double [Ndata];
+    }
+  }
+
+  cov_inv=new double*** [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    cov_inv[alpha]=new double** [Ndata];
+    for (int i=0; i<Ndata; i++) {
+      cov_inv[alpha][i]=new double* [Nvar];
+      for (int alpha_p; alpha_p<Nvar; alpha_p++)
+	cov_inv[alpha][i][alpha_p]=new double [Ndata];
+    }
+  }
+
+  ftmp=new double** [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    ftmp[alpha]=new double* [Ncoeff];
+    for (int beta=0; beta<Ncoeff; beta++)
+      ftmp[alpha][beta]=new double [Ndata];
+  }
+  Ctmp=new double [Ncoeff];
+  
+  int N=y[0][0].ReturnN();
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++) {
+      if (y[alpha][i].ReturnN() != N) {
+	//Error: I think I'd rather have it abort here.
+	cout << "All y[alpha][i] must have same number of jackknife values.\n";
+	return 0;
+      }
+      for (int beta=0; beta<Ncoeff; beta++)
+	if (f[alpha][beta][i].ReturnN() != N) {
+	  //Error: I think I'd rather have it abort here.
+	  cout << "All f[alpha][beta][i] must have same number of jackknife values.\n";
+	  return 0;
+	}
+    }
+  
+  Jackknife tmp(N);
+  for (int beta=0; beta<Ncoeff; beta++)
+    C[beta]=tmp;
+
+  //Frozen covariance matrix
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++)
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	for (int i_p=0; i_p<Ndata; i_p++)
+	  cov[alpha][i][alpha_p][i_p]=Cov(y[alpha][i],y[alpha_p][i_p]);
+
+  //Want to invert cov.  Need to map it to a two-dimensional
+  //array.  Map the index pair (alpha,i) to alpha*Ndata+i+1, where
+  //the +1 is so that numbering starts at 1 since I will use
+  //Numerical Recipes functions to invert.
+  double** tmp_mat=new double* [Nvar*Ndata+1];
+  double** tmp_mat_inv=new double* [Nvar*Ndata+1];
+  for (int ii=0; ii<Nvar*Ndata+1; ii++) {
+    tmp_mat[ii]=new double [Nvar*Ndata+1];
+    tmp_mat_inv[ii]=new double [Nvar*Ndata+1];
+  }
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++)
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	for (int i_p=0; i_p<Ndata; i_p++)
+	  tmp_mat[alpha*Ndata+i+1][alpha_p*Ndata+i_p+1]=cov[alpha][i][alpha_p][i_p];
+  //Invert tmp_mat
+  invert_mat(tmp_mat,tmp_mat_inv,Nvar*Ndata);
+  //Put tmp_mat_inv into cov_inv.
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++)
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	for (int i_p=0; i_p<Ndata; i_p++)
+	  cov_inv[alpha][i][alpha_p][i_p]=tmp_mat_inv[alpha*Ndata+i+1][alpha_p*Ndata+i_p+1];
+  //Delete tmp_mat and tmp_mat_inv
+  for (int ii=0; ii<Nvar*Ndata+1; ii++) {
+    delete [] tmp_mat[ii];
+    delete [] tmp_mat_inv[ii];
+  }
+  delete [] tmp_mat;
+  delete [] tmp_mat_inv;
+  
+  
+  //Fit the average
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++) {
+      ytmp[alpha][i]=y[alpha][i].ReturnAve();
+      for (int beta=0; beta<Ncoeff; beta++)
+	ftmp[alpha][beta][i]=f[alpha][beta][i].ReturnAve();
+    }
+  cov_linear_least_square(Nvar,Ncoeff,Ndata,ytmp,cov_inv,ftmp,Ctmp);
+  for (int beta=0; beta<Ncoeff; beta++)
+    C[beta].ave=Ctmp[beta];
+  
+  //Fit the jackknife blocks
+  for (int j=0; j<N; j++) {
+    for (int alpha=0; alpha<Nvar; alpha++)
+      for (int i=0; i<Ndata; i++) {
+	ytmp[alpha][i]=y[alpha][i].ReturnJk(j);
+	for (int beta=0; beta<Ncoeff; beta++)
+	  ftmp[alpha][beta][i]=f[alpha][beta][i].ReturnJk(j);
+      }
+    cov_linear_least_square(Nvar,Ncoeff,Ndata,ytmp,cov_inv,ftmp,Ctmp);
+    for (int beta=0; beta<Ncoeff; beta++)
+      C[beta].jk[j]=Ctmp[beta];
+  }
+  
+  //Have to do CalcAll to all of the C[beta]
+  for (int beta=0; beta<Ncoeff; beta++)
+    C[beta].CalcAll();
+  
+  //Free memory allocated in this function
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    delete [] ytmp[alpha];
+    
+    for (int i=0; i<Ndata; i++) {
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	delete [] cov[alpha][i][alpha_p];
+      delete [] cov[alpha][i];
+    }
+    delete [] cov[alpha];
+
+    for (int i=0; i<Ndata; i++) {
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	delete [] cov_inv[alpha][i][alpha_p];
+      delete [] cov_inv[alpha][i];
+    }
+    delete [] cov_inv[alpha];
+
+    for (int beta=0; beta<Ncoeff; beta++)
+      delete [] ftmp[alpha][beta];
+    delete [] ftmp[alpha];
+  }
+  delete [] ytmp;
+  delete [] cov;
+  delete [] cov_inv;
+  delete [] ftmp;
+  delete [] Ctmp;
+
+  return 1;
+}
+
 //Calculates chi^2 (under the jackknife) for the output of 
 //Lin_Least_Squares.  Arguments are the same as for
 //Lin_Least_Squares, but they must be given to this function
@@ -813,6 +996,150 @@ Jackknife Simul_ChiSq(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*
 Jackknife Simul_ChiSq_Per_Dof(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[])
 {
   return Simul_ChiSq(Nvar,Ncoeff,Ndata,y,f,C)/double(Nvar*Ndata-Ncoeff);
+}
+
+//Same as ChiSq, but for the output of Cov_Lin_Least_Squares.
+Jackknife Cov_ChiSq(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[])
+{
+  Jackknife** ytmp;
+  Jackknife*** ftmp;
+  
+  ytmp=new Jackknife* [1];
+  ytmp[0]=y;
+  
+  ftmp=new Jackknife** [1];
+  ftmp[0]=f;
+
+  Jackknife return_val=Simul_Cov_ChiSq(1,Ncoeff,Ndata,ytmp,ftmp,C);
+  
+  //Free memory allocated in this function.
+  delete [] ytmp;
+  delete [] ftmp;
+
+  return return_val;
+}
+
+//chi^2 per d.o.f. = chi^2/(Ndata-Ncoeff) (note: Nvar=1)
+Jackknife Cov_ChiSq_Per_Dof(int Ncoeff, int Ndata, Jackknife* y, Jackknife** f, Jackknife C[])
+{
+  return Cov_ChiSq(Ncoeff,Ndata,y,f,C)/double(Ndata-Ncoeff);
+}
+
+//Same as Simul_ChiSq but for output of Simul_Cov_Lin_Least_Squares
+Jackknife Simul_Cov_ChiSq(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[])
+{
+  double**** cov;
+  double**** cov_inv;
+  
+  cov=new double*** [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    cov[alpha]=new double** [Ndata];
+    for (int i=0; i<Ndata; i++) {
+      cov[alpha][i]=new double* [Nvar];
+      for (int alpha_p; alpha_p<Nvar; alpha_p++)
+	cov[alpha][i][alpha_p]=new double [Ndata];
+    }
+  }
+  
+  cov_inv=new double*** [Nvar];
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    cov_inv[alpha]=new double** [Ndata];
+    for (int i=0; i<Ndata; i++) {
+      cov_inv[alpha][i]=new double* [Nvar];
+      for (int alpha_p; alpha_p<Nvar; alpha_p++)
+	cov_inv[alpha][i][alpha_p]=new double [Ndata];
+    }
+  }
+
+
+  //First we need to calculate the covariance matrix
+  //and invert it.
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++)
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	for (int i_p=0; i_p<Ndata; i_p++)
+	  cov[alpha][i][alpha_p][i_p]=Cov(y[alpha][i],y[alpha_p][i_p]);
+
+  //Want to invert cov.  Need to map it to a two-dimensional
+  //array.  Map the index pair (alpha,i) to alpha*Ndata+i+1, where
+  //the +1 is so that numbering starts at 1 since I will use
+  //Numerical Recipes functions to invert.
+  double** tmp_mat=new double* [Nvar*Ndata+1];
+  double** tmp_mat_inv=new double* [Nvar*Ndata+1];
+  for (int ii=0; ii<Nvar*Ndata+1; ii++) {
+    tmp_mat[ii]=new double [Nvar*Ndata+1];
+    tmp_mat_inv[ii]=new double [Nvar*Ndata+1];
+  }
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++)
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	for (int i_p=0; i_p<Ndata; i_p++)
+	  tmp_mat[alpha*Ndata+i+1][alpha_p*Ndata+i_p+1]=cov[alpha][i][alpha_p][i_p];
+  //Invert tmp_mat
+  invert_mat(tmp_mat,tmp_mat_inv,Nvar*Ndata);
+  //Put tmp_mat_inv into cov_inv.
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int i=0; i<Ndata; i++)
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	for (int i_p=0; i_p<Ndata; i_p++)
+	  cov_inv[alpha][i][alpha_p][i_p]=tmp_mat_inv[alpha*Ndata+i+1][alpha_p*Ndata+i_p+1];
+  //Delete tmp_mat and tmp_mat_inv
+  for (int ii=0; ii<Nvar*Ndata+1; ii++) {
+    delete [] tmp_mat[ii];
+    delete [] tmp_mat_inv[ii];
+  }
+  delete [] tmp_mat;
+  delete [] tmp_mat_inv;
+
+  //Now we can calculate chi^2
+
+  Jackknife result=0.0*C[0];
+  for (int alpha=0; alpha<Nvar; alpha++)
+    for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+      for (int i=0; i<Ndata; i++)
+	for (int i_p=0; i_p<Ndata; i_p++) {
+	  Jackknife beta_sum1=0.0*C[0];
+	  Jackknife beta_sum2=beta_sum1;
+	  for (int beta=0; beta<Ncoeff; beta++) {
+	    beta_sum1+=C[beta]*f[alpha][beta][i];
+	    beta_sum2+=C[beta]*f[alpha_p][beta][i_p];
+	  }
+	  Jackknife tmp1=y[alpha][i]-beta_sum1;
+	  Jackknife tmp2=y[alpha_p][i_p]-beta_sum2;
+	  result+=cov_inv[alpha][i][alpha_p][i_p]*tmp1*tmp2;
+	}
+
+
+  //Delete memory allocated
+  for (int alpha=0; alpha<Nvar; alpha++) {
+    
+    for (int i=0; i<Ndata; i++) {
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	delete [] cov[alpha][i][alpha_p];
+      delete [] cov[alpha][i];
+    }
+    delete [] cov[alpha];
+
+    for (int i=0; i<Ndata; i++) {
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
+	delete [] cov_inv[alpha][i][alpha_p];
+      delete [] cov_inv[alpha][i];
+    }
+    delete [] cov_inv[alpha];
+
+  }
+  delete [] cov;
+  delete [] cov_inv;
+
+
+  //Return chi^2  
+  return result;
+}
+
+//chi^2 per d.o.f. = chi^2/(Nvar*Ndata-Ncoeff)
+Jackknife Simul_Cov_ChiSq_Per_Dof(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackknife*** f, Jackknife C[])
+{
+  return Simul_Cov_ChiSq(Nvar,Ncoeff,Ndata,y,f,C)/double(Nvar*Ndata-Ncoeff);
 }
 
 //Outputs the average followed by the jackknife values to a text file.
