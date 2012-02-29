@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <cstdlib>
 using namespace std;
 #include "data_read_in_hisq.h"
 #include "data_read_in.h"
