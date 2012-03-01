@@ -1036,7 +1036,7 @@ Jackknife Simul_Cov_ChiSq(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackkn
     cov[alpha]=new double** [Ndata];
     for (int i=0; i<Ndata; i++) {
       cov[alpha][i]=new double* [Nvar];
-      for (int alpha_p; alpha_p<Nvar; alpha_p++)
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
 	cov[alpha][i][alpha_p]=new double [Ndata];
     }
   }
@@ -1046,7 +1046,7 @@ Jackknife Simul_Cov_ChiSq(int Nvar, int Ncoeff, int Ndata, Jackknife** y, Jackkn
     cov_inv[alpha]=new double** [Ndata];
     for (int i=0; i<Ndata; i++) {
       cov_inv[alpha][i]=new double* [Nvar];
-      for (int alpha_p; alpha_p<Nvar; alpha_p++)
+      for (int alpha_p=0; alpha_p<Nvar; alpha_p++)
 	cov_inv[alpha][i][alpha_p]=new double [Ndata];
     }
   }
