@@ -70,15 +70,24 @@ double delta1(double x)
   const double epsilon=1.0E-9;
   
   double sum=0.0, term;
+  int converged=0;
   for (int nsq=1; nsq<=nsq_max; nsq++) {
-    term=return_mult(nsq)*K1(sqrt(double(nsq))*x)/sqrt(double(nsq));
+    int mult=return_mult(nsq);
+    if (mult==0) continue;  //Don't want to calculate Bessel function or
+                            //do convergence test for these terms (or
+                            //it will spuriously pass the convergence
+                            //test).
+
+    term=mult*K1(sqrt(double(nsq))*x)/sqrt(double(nsq));
     if (sum!=0.0)
-      if (fabs(term/sum)<epsilon) break;
+      if (fabs(term/sum)<epsilon) {
+	converged=1;
+	break;
+      }
     sum+=term;
-    
-    if (nsq==nsq_max)
-      cout << "delta1:  Warning, reached nsq_max and didn't converge.\n";
   }
+  if (!converged)
+    cout << "delta1:  Warning, reached nsq_max and didn't converge.\n";
   
   return 4.0/x*sum;
 }
