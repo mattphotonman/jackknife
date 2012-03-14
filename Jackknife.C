@@ -10,6 +10,8 @@ using namespace std;
 #include "least_squares.h"
 #include "global_const.h"
 #include "random.h"
+#include "special_functions.h"
+#include "finite_volume.h"
 
 
 //Jackknife class
@@ -476,6 +478,45 @@ Jackknife dPhi(const Jackknife & J, int tau_x, int tau_y, int tau_z)
 {
   Jackknife tmp(J);
   tmp.dPhi(tau_x,tau_y,tau_z);
+  return tmp;
+}
+
+//BesselK1 (member function)
+Jackknife & Jackknife::BesselK1()
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=K1(jk[i]);
+  }
+  ave=K1(ave);
+  CalcAll();
+  return *this;
+}
+
+//BesselK1 (friend function)
+Jackknife BesselK1(const Jackknife & J)
+{
+  Jackknife tmp(J);
+  tmp.BesselK1();
+  return tmp;
+}
+
+//Delta1 (member function)
+//(finite volume function)
+Jackknife & Jackknife::Delta1()
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=delta1(jk[i]);
+  }
+  ave=delta1(ave);
+  CalcAll();
+  return *this;
+}
+
+//Delta1 (friend function)
+Jackknife Delta1(const Jackknife & J)
+{
+  Jackknife tmp(J);
+  tmp.Delta1();
   return tmp;
 }
 

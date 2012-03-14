@@ -65,6 +65,10 @@ class Jackknife
   friend Jackknife Phi_Phi0(const Jackknife & J, int tau_x, int tau_y, int tau_z, double phi0);
   Jackknife & dPhi(int tau_x, int tau_y, int tau_z);
   friend Jackknife dPhi(const Jackknife & J, int tau_x, int tau_y, int tau_z);
+  Jackknife & BesselK1();
+  friend Jackknife BesselK1(const Jackknife & J);
+  Jackknife & Delta1();
+  friend Jackknife Delta1(const Jackknife & J);
   Jackknife & Bin(int bin_size);
   friend Jackknife Bin(const Jackknife & J, int bin_size);
   Jackknife & Abs();
