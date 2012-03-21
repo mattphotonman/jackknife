@@ -136,3 +136,26 @@ double I0( double x) {
         return (y);
        
 }
+
+//Bessel K_n function for n>=2.  Uses K1 and K0.
+double besselK(int n, double x)
+{
+  int j;
+  double bk,bkm,bkp,tox;
+  
+  if (n < 2) {
+    cout << "Index n less than 2 in besselK.";
+    exit(1);
+  }
+  
+  tox=2.0/x;
+  bkm=K0(x); 
+  bk=K1(x); 
+  for (j=1;j<n;j++) {
+    bkp=bkm+j*tox*bk; 
+    bkm=bk; 
+    bk=bkp;
+  } 
+
+  return bk;  
+}

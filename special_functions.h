@@ -6,5 +6,6 @@ double K1(double x);
 double I1(double x);
 double K0(double x);
 double I0(double x);
+double besselK(int n, double x);
 
 #endif
