@@ -481,22 +481,22 @@ Jackknife dPhi(const Jackknife & J, int tau_x, int tau_y, int tau_z)
   return tmp;
 }
 
-//BesselK1 (member function)
-Jackknife & Jackknife::BesselK1()
+//BesselK (member function)
+Jackknife & Jackknife::BesselK(int n)
 {
   for (int i=0; i<N; i++) {
-    jk[i]=K1(jk[i]);
+    jk[i]=besselK(n,jk[i]);
   }
-  ave=K1(ave);
+  ave=besselK(n,ave);
   CalcAll();
   return *this;
 }
 
-//BesselK1 (friend function)
-Jackknife BesselK1(const Jackknife & J)
+//BesselK (friend function)
+Jackknife BesselK(int n, const Jackknife & J)
 {
   Jackknife tmp(J);
-  tmp.BesselK1();
+  tmp.BesselK(n);
   return tmp;
 }
 
@@ -517,6 +517,26 @@ Jackknife Delta1(const Jackknife & J)
 {
   Jackknife tmp(J);
   tmp.Delta1();
+  return tmp;
+}
+
+//Delta2 (member function)
+//(finite volume function)
+Jackknife & Jackknife::Delta2()
+{
+  for (int i=0; i<N; i++) {
+    jk[i]=delta2(jk[i]);
+  }
+  ave=delta2(ave);
+  CalcAll();
+  return *this;
+}
+
+//Delta2 (friend function)
+Jackknife Delta2(const Jackknife & J)
+{
+  Jackknife tmp(J);
+  tmp.Delta2();
   return tmp;
 }
 

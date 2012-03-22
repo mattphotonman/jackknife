@@ -142,9 +142,13 @@ double besselK(int n, double x)
 {
   int j;
   double bk,bkm,bkp,tox;
-  
-  if (n < 2) {
-    cout << "Index n less than 2 in besselK.";
+
+  if (n==0)
+    return K0(x);
+  else if (n==1)
+    return K1(x);
+  else if (n<0) {
+    cout << "Index n less than 0 in besselK.";
     exit(1);
   }
   

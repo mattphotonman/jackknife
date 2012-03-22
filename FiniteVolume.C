@@ -64,6 +64,7 @@ void calc_mults(int mults[],int nsq_last)
   
 }
 
+//delta1(x) = 4/x*sum(m(n)/sqrt(n)*K1(sqrt(n)*x),n=1..infinity)
 double delta1(double x)
 {
   const int nsq_max=100;  //Should be <=nsq_last in return_mult function.
@@ -90,4 +91,34 @@ double delta1(double x)
     cout << "delta1:  Warning, reached nsq_max and didn't converge.\n";
   
   return 4.0/x*sum;
+}
+
+//delta2(x) = 4/x^2*sum(m(n)/n*K2(sqrt(n)*x),n=1..infinity)
+//(I made up this definition, this function isn't defined in any papers).
+double delta2(double x)
+{
+  const int nsq_max=100;  //Should be <=nsq_last in return_mult function.
+  const double epsilon=1.0E-9;
+  
+  double sum=0.0, term;
+  int converged=0;
+  for (int nsq=1; nsq<=nsq_max; nsq++) {
+    int mult=return_mult(nsq);
+    if (mult==0) continue;  //Don't want to calculate Bessel function or
+                            //do convergence test for these terms (or
+                            //it will spuriously pass the convergence
+                            //test).
+
+    term=mult*besselK(2,sqrt(double(nsq))*x)/double(nsq);
+    if (sum!=0.0)
+      if (fabs(term/sum)<epsilon) {
+	converged=1;
+	break;
+      }
+    sum+=term;
+  }
+  if (!converged)
+    cout << "delta2:  Warning, reached nsq_max and didn't converge.\n";
+  
+  return 4.0/(x*x)*sum;
 }
