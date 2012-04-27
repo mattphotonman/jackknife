@@ -144,6 +144,14 @@ WMEDataReadIn & WMEDataReadIn::operator=(const WMEDataReadIn& D)
   }
   return *this;
 }
+
+//Say if configuration i has been read for timeslice t
+int WMEDataReadIn::ReturnIsDefined(int t, int i) const
+{
+  if (t<0 || t>=Nt || i<0 || i>=N) return 0;
+      
+  return was_read[t][i];
+}
   
 //Say if all configurations have been read for timeslice t
 int WMEDataReadIn::ReturnIsDefined(int t) const
@@ -503,6 +511,14 @@ WMECmplxDataReadIn & WMECmplxDataReadIn::operator=(const WMECmplxDataReadIn& D)
     labels[j]=D.labels[j];
   }
   return *this;
+}
+
+//Say if configuration i has been read for timeslice t
+int WMECmplxDataReadIn::ReturnIsDefined(int t, int i) const
+{
+  if (t<0 || t>=Nt || i<0 || i>=N) return 0;
+      
+  return was_read[t][i];
 }
   
 //Say if all configurations have been read for timeslice t

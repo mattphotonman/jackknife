@@ -24,6 +24,7 @@ class WMEDataReadIn
   explicit WMEDataReadIn(int nt=1, int n=2, int datcol=3, int tcol=2, string in="");
   virtual ~WMEDataReadIn();
   WMEDataReadIn & operator=(const WMEDataReadIn & D);
+  int ReturnIsDefined(int t, int i) const;
   int ReturnIsDefined(int t) const;
   int AllDataRead() const;
   int ReturnNt() const;
@@ -61,6 +62,7 @@ class WMECmplxDataReadIn
   explicit WMECmplxDataReadIn(int nt=1, int n=2, int redatcol=3, int imdatcol=4, int tcol=2, string in="");
   virtual ~WMECmplxDataReadIn();
   WMECmplxDataReadIn & operator=(const WMECmplxDataReadIn & D);
+  int ReturnIsDefined(int t, int i) const;
   int ReturnIsDefined(int t) const;
   int AllDataRead() const;
   int ReturnNt() const;
