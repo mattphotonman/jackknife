@@ -1,2 +1,3 @@
 -function that outputs the average and the error of a Jackknife object to cout (so I don't always have to type .ReturnAve() and .ReturnErr())
 -same as above but also puts it through the errs function so that the errors are formatted (have to put the errs function into the code, can find it in my K->PiPi analysis somewhere)
+-when you open a file for reading (e.g. using ReadFile in DataReadInHisq.C), if the file doesn't exist it just reads nothing, but I might rather have it give me an error message
